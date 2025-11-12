@@ -1,156 +1,161 @@
-import React, { useState, useEffect } from 'react';
-import apiClient from './api/axiosConfig'; // Use the configured Axios instance
-import './App.css';
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// Import routing components and ALL page components
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import ProductDetailPage from './components/ProductDetailPage';
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
+/* 🌍 Pages */
+import Home from "./pages/Home";
+import BuyerDashboard from "./pages/BuyerDashboard";
+import SellerDashboard from "./pages/SellerDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import ProductDetails from "./pages/ProductDetails";
+import ViewSoldProducts from "./pages/ViewSoldProducts";
+import MyProducts from "./pages/MyProducts";
+import SellerOrders from "./pages/SellerOrders";
+import SellerProfile from "./pages/SellerProfile";
+import BuyerProfile from "./pages/BuyerProfile";
+import BuyerOrders from "./pages/BuyerOrders";
+import BuyBox from "./pages/BuyBox";
+import PaymentPortal from "./pages/PaymentPortal";
+import Cart from "./pages/Cart";
+import AddProduct from "./pages/AddProduct";
+import EcoRankPage from "./pages/EcoRankPage";
 
-// --- Auth Context (Simple version for now) ---
-// This allows child components to access the current user and logout function
-// For more complex apps, consider dedicated state management libraries (Zustand, Redux)
-export const AuthContext = React.createContext(null);
+/* 🔐 Popups */
+import LoginPopup from "./LoginPopup";
+import SignupPopup from "./SignupPopup";
 
-// --- ProductList Component (Remains the same as before) ---
-function ProductList() {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+/* 🌿 Sample Product Images */
+import cottonBag from "./assets/cotton_bag.jpg";
+import brush from "./assets/brush.webp";
+import note from "./assets/notes.jpg";
+import power from "./assets/powerbank.jpg";
 
-    useEffect(() => {
-        setLoading(true);
-        setError(null);
-        apiClient.get("/products") // Uses the configured apiClient
-            .then(response => {
-                setProducts(response.data);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.error("There was an error fetching the products:", error);
-                setError("Failed to load products. Please ensure the backend is running.");
-                setLoading(false);
-            });
-    }, []);
-
-    if (loading) return <div className="status-message">Loading products...</div>;
-    if (error) return <div className="status-message error-message">{error}</div>;
-    if (products.length === 0) return <div className="status-message">No products found.</div>;
-
-    return (
-        <div className="product-list-container">
-            <h2>Our Products</h2>
-            <div className="product-list">
-                {products.map(product => (
-                    <div key={product.id} className="product-item">
-                        <h3>
-                            <Link to={`/product/${product.id}`} className="product-link">
-                                {product.name}
-                            </Link>
-                        </h3>
-                        <p>{product.description}</p>
-                        <p>Price: ${product.price != null ? product.price.toFixed(2) : 'N/A'}</p>
-                        <p>Carbon Rating: {product.carbonRating} (Score: {product.carbonScore})</p>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-// --- End ProductList ---
-
-
-// --- Main App Component ---
 function App() {
-    // --- Global Auth State ---
-    // Stores { username, role, token } if logged in, otherwise null
-    const [currentUser, setCurrentUser] = useState(null);
+  /* 🛍️ Seller Products (Persistent State) */
+  const [products, setProducts] = useState(() => {
+    // ✅ Load products from localStorage or use defaults
+    const saved = localStorage.getItem("sellerProducts");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 1,
+            name: "Organic Cotton Tote Bag",
+            price: 499,
+            stock: 30,
+            sold: 15,
+            category: "Accessories",
+            image: cottonBag,
+          },
+          {
+            id: 2,
+            name: "Bamboo Toothbrush Set",
+            price: 299,
+            stock: 80,
+            sold: 55,
+            category: "Home",
+            image: brush,
+          },
+          {
+            id: 3,
+            name: "Recycled Notebook",
+            price: 199,
+            stock: 40,
+            sold: 25,
+            category: "Stationery",
+            image: note,
+          },
+          {
+            id: 4,
+            name: "Solar Power Bank",
+            price: 899,
+            stock: 15,
+            sold: 10,
+            category: "Electronics",
+            image: power,
+          },
+        ];
+  });
 
-    // --- Load user from localStorage on initial app load ---
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
-        const role = localStorage.getItem('role');
+  /* 💾 Save products to localStorage whenever updated */
+  useEffect(() => {
+    localStorage.setItem("sellerProducts", JSON.stringify(products));
+  }, [products]);
 
-        // If all items exist, set the currentUser state
-        if (token && username && role) {
-            setCurrentUser({ token, username, role });
-            console.log("App loaded: User found in storage:", { username, role });
-        } else {
-             console.log("App loaded: No user found in storage.");
-             // Ensure any leftover items are cleared if incomplete
-             localStorage.removeItem('token');
-             localStorage.removeItem('username');
-             localStorage.removeItem('role');
-        }
-    }, []); // Empty dependency array means this runs only once when the App component mounts
+  /* ✅ Add New Product */
+  const handleAddProduct = (newProduct) => {
+    const newId = products.length ? products[products.length - 1].id + 1 : 1;
+    const newProd = { id: newId, sold: 0, ...newProduct };
+    setProducts((prev) => [...prev, newProd]);
+  };
 
-    // --- Logout Function ---
-    // Clears user data from localStorage and state, then redirects
-    const handleLogout = () => {
-        if (currentUser) { // Check if a user is actually logged in
-             console.log("Logging out user:", currentUser.username);
-        }
-        localStorage.removeItem('token');
-        localStorage.removeItem('username');
-        localStorage.removeItem('role');
-        setCurrentUser(null); // Update the state to reflect logged-out status
-        // Use window.location for a simple redirect after logout
-        // For more complex routing needs, especially within components, use useNavigate
-        window.location.href = '/login';
-    };
-    // --- End Auth State & Logout ---
-
-    return (
-        // Provide the current user state and logout function to all child components via Context
-        <AuthContext.Provider value={{ currentUser, setCurrentUser, handleLogout }}>
-             <Router>
-                <div className="App">
-                    <header className="App-header">
-                        <nav className="main-nav">
-                            <Link to="/" className="nav-link">Home</Link> |
-                            {/* --- Conditionally Render Navigation Links --- */}
-                            {currentUser ? (
-                                // If user is logged in, show username, role, and Logout button
-                                <>
-                                    <span className="nav-user">Welcome, {currentUser.username} ({currentUser.role})</span> |
-                                    <button onClick={handleLogout} className="nav-link logout-button">Logout</button>
-                                    {/* Add Cart link maybe here later? */}
-                                </>
-                            ) : (
-                                // If user is not logged in, show Login and Register links
-                                <>
-                                    <Link to="/login" className="nav-link">Login</Link> |
-                                    <Link to="/register" className="nav-link">Register</Link>
-                                </>
-                            )}
-                            {/* --- End Conditional Navigation --- */}
-                        </nav>
-
-                        <h1><Link to="/" className="home-link">Welcome to EcoBazaar</Link></h1>
-
-                        <Routes>
-                            <Route path="/" element={<ProductList />} />
-                            <Route path="/product/:productId" element={<ProductDetailPage />} />
-                            {/* Pass setCurrentUser down to LoginPage - needed if LoginPage updates state directly */}
-                            {/* Alternatively, LoginPage could import and use the AuthContext */}
-                            <Route path="/login" element={<LoginPage /* Pass setCurrentUser={setCurrentUser} if needed */ />} />
-                            <Route path="/register" element={<RegisterPage />} />
-                            {/* Add Cart route later */}
-                            {/* <Route path="/cart" element={<CartPage />} /> */}
-
-                            {/* Example Protected Route (Needs more setup, e.g., a RequireAuth component) */}
-                            {/* {currentUser?.role === 'ROLE_ADMIN' && (
-                                <Route path="/admin" element={<AdminDashboard />} />
-                            )} */}
-                        </Routes>
-                    </header>
-                </div>
-            </Router>
-        </AuthContext.Provider>
+  /* ✏️ Edit Product */
+  const handleEditProduct = (updatedProduct) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
     );
+  };
+
+  /* 🗑️ Delete Product */
+  const handleDeleteProduct = (id) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    }
+  };
+
+  return (
+    <Router>
+      <Routes>
+        {/* 🏠 Home Page */}
+        <Route path="/" element={<Home />} />
+
+        {/* 👤 Buyer Pages */}
+        <Route path="/BuyerDashboard" element={<BuyerDashboard />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/pages/BuyerProfile" element={<BuyerProfile />} />
+        <Route path="/orders" element={<BuyerOrders />} />
+        <Route path="/buybox" element={<BuyBox />} />
+        <Route path="/PaymentPortal" element={<PaymentPortal />} />
+        <Route path="/EcoRankPage" element={<EcoRankPage />} />
+        <Route path="/cart" element={<Cart />} />
+
+        {/* 🏪 Seller Pages */}
+        <Route
+          path="/SellerDashboard"
+          element={
+            <SellerDashboard
+              products={products}
+              onEdit={handleEditProduct}
+              onDelete={handleDeleteProduct}
+            />
+          }
+        />
+        <Route path="/view-sold-products" element={<ViewSoldProducts />} />
+        <Route
+          path="/my-products"
+          element={
+            <MyProducts
+              products={products}
+              onEdit={handleEditProduct}
+              onDelete={handleDeleteProduct}
+            />
+          }
+        />
+        <Route path="/seller-orders" element={<SellerOrders />} />
+        <Route path="/seller/profile" element={<SellerProfile />} />
+        <Route
+          path="/seller/add-product"
+          element={<AddProduct onAddProduct={handleAddProduct} />}
+        />
+
+        {/* 🧑‍💼 Admin */}
+        <Route path="/AdminDashboard" element={<AdminDashboard />} />
+
+        {/* 🔐 Auth */}
+        <Route path="/login" element={<LoginPopup />} />
+        <Route path="/signup" element={<SignupPopup />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;
-
