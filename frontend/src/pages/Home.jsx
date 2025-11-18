@@ -11,7 +11,6 @@ import cottonBag from "../assets/cotton_bag.jpg";
 import brush from "../assets/brush.webp";
 import note from "../assets/notes.jpg";
 import power from "../assets/powerbank.jpg";
-import shirt from "../assets/shirt.jpeg";
 import cover from "../assets/cover.webp";
 import kurthi from "../assets/kurthi.webp";
 import juteBag from "../assets/jutebag.webp";
@@ -25,13 +24,11 @@ const products = [
   { name: "Recycled Notebook Pack", price: 199, image: note, carbonFootprint: 0.8 },
   { name: "Solar Power Bank", price: 999, image: power, carbonFootprint: 2.5 },
   { name: "Eco Phone Cover", price: 249, image: cover, carbonFootprint: 0.6 },
-  { name: "Organic Men’s Shirt", price: 599, image: shirt, carbonFootprint: 1.8 },
   { name: "Handcrafted Jute Bag", price: 399, image: juteBag, carbonFootprint: 1.4 },
   { name: "Plant-Based Bottle", price: 299, image: pbottle, carbonFootprint: 0.7 },
   { name: "Bamboo Pen Set", price: 149, image: pen, carbonFootprint: 0.3 },
   { name: "Eco Gift Box", price: 799, image: gift, carbonFootprint: 2.0 },
   { name: "Organic Kurthi", price: 499, image: kurthi, carbonFootprint: 1.3 },
-  { name: "Recycled Notebook", price: 299, image: note, carbonFootprint: 0.9 },
 ];
 
 function Home() {
@@ -91,23 +88,32 @@ function Home() {
         </div>
       </section>
 
-      {/* 🛍 Product Section */}
-      <section className="product-section" ref={productsRef}>
-        <h2>🌿 Sustainable Products</h2>
-        <div className="product-grid">
-          {products.map((item, index) => (
-            <div key={index} className="product-card" onClick={handleProductClick}>
-              <div className="product-image">
-                <img src={item.image} alt={item.name} />
-                <div className="hover-info">View Details ➜</div>
-              </div>
-              <h4>{item.name}</h4>
-              <p>₹{item.price}</p>
-              <span className="carbon-tag">♻️ {item.carbonFootprint} kg CO₂</span>
-            </div>
-          ))}
+     {/* 🛍 Product Section */}
+<section className="product-section" ref={productsRef}>
+  <h2>🌿 Sustainable Products</h2>
+
+  <div className="product-grid">
+    {products.map((item, index) => (
+      <div key={index} className="product-card modern" onClick={handleProductClick}>
+        
+        <div className="product-img-box">
+          <img src={item.image} alt={item.name} />
+
+          <span className="carbon-badge">
+            ♻️ {item.carbonFootprint} kg CO₂
+          </span>
+
+          <div className="view-overlay">View Details ➜</div>
         </div>
-      </section>
+
+        <div className="product-info">
+          <h4>{item.name}</h4>
+          <p className="price">₹{item.price}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
 
       <Footer />
 

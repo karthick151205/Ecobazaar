@@ -1,13 +1,12 @@
 import React from "react";
 import "./Footer.css";
 
-function Footer() {
+const Footer = () => {
   return (
     <footer className="footer">
-      <p>© 2025 EcoBazaar. All rights reserved.</p>
-      <p>Made with 💚 for a sustainable future.</p>
+      <p>🌿 EcoBazaar © {new Date().getFullYear()} — Sustainable Shopping for a Greener Tomorrow</p>
     </footer>
   );
-}
+};
 
 export default Footer;

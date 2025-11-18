@@ -1,300 +1,258 @@
-/* 🌿 Overall Page */
+/* ===== 🌿 GLOBAL STYLES ===== */
 .payment-container {
-  background: linear-gradient(145deg, #e9f8ec, #d1f2d8);
+  background: #f0fff4;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   font-family: "Poppins", sans-serif;
+  margin-top: 40px;
 }
 
-/* 🌿 Portal Wrapper */
 .portal-wrapper {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 50px 20px;
+  width: 100%;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
 }
 
-/* 🌿 Payment Portal Box */
+/* ===== 💳 PAYMENT BOX ===== */
 .portal-box {
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 0 25px rgba(0, 100, 50, 0.15);
-  border-radius: 20px;
-  padding: 40px 50px;
-  width: 90%;
-  max-width: 850px;
-  text-align: center;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 18px;
+  box-shadow: 0 5px 20px rgba(0, 128, 64, 0.15);
   animation: fadeIn 0.6s ease-in-out;
-  border: 2px solid rgba(25, 135, 84, 0.3);
 }
 
 .portal-box h2 {
-  color: #0f5132;
-  font-size: 28px;
-  font-weight: 800;
-  text-shadow: 0 0 6px rgba(0, 255, 150, 0.3);
+  text-align: center;
+  color: #047857;
+  font-size: 26px;
+  letter-spacing: 0.4px;
 }
 
 .portal-box .desc {
-  color: #2e7d5b;
-  font-size: 16px;
-  margin: 10px 0 25px;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #065f46;
 }
 
-/* 🌿 Payment Methods Grid */
+/* ===== 🔘 PAYMENT METHOD CARDS ===== */
 .method-grid {
   display: flex;
+  gap: 20px;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 25px;
-  margin-bottom: 35px;
+  margin-bottom: 25px;
 }
 
 .method-card {
-  background: #f7fff8;
-  border: 2px solid #b2e5c2;
-  border-radius: 15px;
-  padding: 25px;
-  width: 240px;
+  padding: 20px;
+  width: 140px;
+  text-align: center;
+  border-radius: 14px;
+  background: #e7f9ef;
+  border: 2px solid #bdf5d0;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 10px rgba(0, 150, 80, 0.1);
+  transition: 0.3s;
 }
 
 .method-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 18px rgba(0, 200, 120, 0.3);
-  background: #eaffea;
+  background: #d1f7de;
+  transform: translateY(-3px);
 }
 
 .method-card.active {
-  border-color: #0f5132;
-  box-shadow: 0 0 15px rgba(25, 135, 84, 0.4);
-  background: #d6f9dd;
-}
-
-.method-card .icon {
-  font-size: 34px;
-  display: block;
-  margin-bottom: 10px;
-}
-
-.method-card h4 {
-  color: #0f5132;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.method-card p {
-  font-size: 13px;
-  color: #2e7d5b;
-}
-
-/* 🌿 UPI Section */
-.upi-section {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 25px;
-  border-radius: 15px;
-  border: 1px solid #b2e5c2;
-  max-width: 400px;
-  margin: 0 auto;
-  box-shadow: 0 0 15px rgba(0, 150, 80, 0.1);
-}
-
-.upi-qr {
-  width: 180px;
-  height: 180px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 150, 80, 0.2);
-  margin: 10px 0;
-}
-
-.pay-btn {
-  background: linear-gradient(45deg, #198754, #0f5132);
+  background: #10b981;
+  border-color: #059669;
   color: white;
-  padding: 12px 20px;
-  border-radius: 30px;
-  font-weight: 600;
-  border: none;
-  margin-top: 15px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
-}
-
-.pay-btn:hover {
-  background: linear-gradient(45deg, #00c76e, #0f5132);
   transform: scale(1.05);
 }
 
-/* 🌿 Card Payment */
-.card-intro, .netbank-intro {
-  margin-top: 20px;
+/* ===== 🟢 UPI QR SECTION ===== */
+.upi-section {
+  text-align: center;
+  margin-top: 15px;
 }
 
-.open-btn {
-  background: linear-gradient(45deg, #b9ffbe, #7fe99a);
-  color: #0f5132;
-  border: none;
-  border-radius: 25px;
-  padding: 10px 20px;
-  font-weight: 600;
-  transition: 0.3s ease;
+.upi-qr {
+  width: 200px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 128, 64, 0.25);
+  margin-bottom: 10px;
 }
 
-.open-btn:hover {
-  background: #00c76e;
-  color: white;
-  transform: translateY(-2px);
-}
-
-.card-form, .netbank-form {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
-  padding: 25px;
-  max-width: 400px;
-  margin: 20px auto;
-  border: 1px solid #b2e5c2;
-}
-
+/* ===== 💳 CARD INPUTS ===== */
 .card-form input,
 .netbank-form select {
   width: 100%;
-  padding: 10px 12px;
-  border: 2px solid #b2e5c2;
-  border-radius: 10px;
+  padding: 12px;
   margin: 8px 0;
-  font-size: 14px;
-  color: #0f5132;
+  border-radius: 10px;
+  border: 1.6px solid #cbd5e1;
+  font-size: 15px;
+  outline: none;
 }
 
 .card-row {
   display: flex;
-  justify-content: space-between;
   gap: 10px;
 }
 
-/* 🌿 Success Section */
+/* ===== 🟢 PAY BUTTON ===== */
+.pay-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: #059669;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.pay-btn:hover {
+  background: #047857;
+}
+
+/* ===== 🎉 SUCCESS BOX ===== */
 .success-box {
-  background: rgba(255, 255, 255, 0.97);
-  border: 2px solid #b2e5c2;
-  box-shadow: 0 0 25px rgba(0, 150, 80, 0.2);
-  border-radius: 20px;
-  padding: 40px 60px;
-  text-align: center;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 150, 80, 0.25);
   animation: fadeIn 0.6s ease-in-out;
-  max-width: 750px;
-}
-
-.success-ring {
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 20px;
-  border: 5px solid #b2e5c2;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 25px rgba(25, 135, 84, 0.4);
-}
-
-.success-tick {
-  font-size: 48px;
-  color: #198754;
-  text-shadow: 0 0 8px #00ff8c;
 }
 
 .success-box h2 {
-  color: #0f5132;
-  margin-bottom: 10px;
+  text-align: center;
+  color: #047857;
+  font-size: 28px;
 }
 
-.success-box p {
-  color: #1c7b47;
+.redirect-msg {
+  text-align: center;
+  margin-top: 10px;
+  color: #059669;
+  font-style: italic;
 }
 
-/* 🌿 Receipt */
+/* ===== 🧾 RECEIPT BOX ===== */
 .eco-receipt {
-  background: #f7fff8;
-  border-radius: 15px;
-  padding: 20px;
-  margin-top: 25px;
-  border: 1px solid #b2e5c2;
-  box-shadow: inset 0 0 15px rgba(0, 150, 80, 0.1);
-  text-align: left;
-  max-width: 450px;
-  margin-inline: auto;
+  background: #f0fff4;
+  border: 2px dashed #34d399;
+  padding: 18px;
+  border-radius: 14px;
+  margin-top: 18px;
+  width:50%;
+  height:100%;
 }
 
 .eco-receipt h3 {
-  color: #0f5132;
-  margin-bottom: 10px;
   text-align: center;
+  color: #065f46;
 }
 
-.eco-receipt p {
-  font-size: 14px;
-  color: #145d36;
-  margin: 4px 0;
+.receipt-header {
+  text-align: center;
+  margin-bottom: 10px;
 }
 
-/* 🌿 Redirect Message */
-.redirect-msg {
-  color: #0f5132;
-  margin-top: 20px;
-  font-style: italic;
-  font-weight: 500;
+.item {
+  display: flex;
+  gap: 14px;
+  background: white;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 10px rgba(0, 128, 64, 0.1);
 }
 
-/* 🌿 Confetti / Leaves */
-.confetti-container {
-  position: relative;
-  overflow: hidden;
-  height: 0;
+.item img {
+  width: 90px;
+  height: 90px;
+  border-radius: 10px;
+  object-fit: cover;
 }
 
-.leaf {
-  position: absolute;
-  top: 0;
-  width: 12px;
-  height: 12px;
-  background: #00c76e;
-  border-radius: 50%;
-  opacity: 0.8;
-  animation: fall 3.5s linear infinite;
+/* 🖨 PRINT BUTTON */
+.print-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  margin-top: 12px;
+  cursor: pointer;
+  transition: 0.25s;
 }
 
-@keyframes fall {
-  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(350px) rotate(360deg); opacity: 0; }
+.print-btn:hover {
+  background: #059669;
 }
 
-/* ✨ Fade animation */
-.fadeIn {
-  animation: fadeIn 0.6s ease-in-out;
+/* ===== 🔙 GENERAL BUTTONS ===== */
+button {
+  font-family: "Poppins", sans-serif;
+  letter-spacing: 0.3px;
 }
 
+/* ===== ✨ ANIMATIONS ====== */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
 }
 
-/* 🌿 Responsive */
-@media (max-width: 768px) {
-  .portal-box {
-    padding: 30px 20px;
-  }
-
+/* ===== 📱 MOBILE RESPONSIVE ===== */
+@media (max-width: 600px) {
   .method-grid {
+    flex-direction: column;
+  }
+  .method-card {
+    width: 100%;
+  }
+  .item {
     flex-direction: column;
     align-items: center;
   }
+}
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
 
-  .eco-receipt {
-    width: 100%;
-  }
+.receipt-table th {
+  background: #10b981;
+  color: white;
+  padding: 8px;
+  text-align: left;
+  font-weight: 600;
+}
 
-  .success-box {
-    padding: 30px 20px;
-  }
+.receipt-table td {
+  padding: 8px;
+  border-bottom: 1px solid #d1fae5;
+}
+
+.grand-total {
+  font-size: 18px;
+  font-weight: 700;
+  color: #065f46;
+}
+
+.thank-note {
+  text-align: center;
+  margin-top: 10px;
+  font-style: italic;
+  color: #047857;
 }

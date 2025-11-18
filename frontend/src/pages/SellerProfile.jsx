@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import SellerNavbar from "../components/SellerNavbar";
-import "./SellerDashboard.css";
+import "./SellerProfile.css";
 import defaultProfile from "../assets/default-profile.jpg";
 import Footer from "../components/Footer";
 function SellerProfile() {
@@ -56,7 +56,6 @@ function SellerProfile() {
       <SellerNavbar />
 
       <div className="profile-section">
-        <h2>👤 Seller Profile</h2>
 
         <div className="profile-card">
           {/* ✅ Profile Image */}

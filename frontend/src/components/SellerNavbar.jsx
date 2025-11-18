@@ -140,7 +140,7 @@ function SellerNavbar({ onSearch }) {
               <FaBoxOpen /> My Products
             </a>
 
-            <a onClick={() => navigate("/sales")}>
+            <a onClick={() => navigate("/seller/sales")}>
               <FaChartBar /> Sales
             </a>
 

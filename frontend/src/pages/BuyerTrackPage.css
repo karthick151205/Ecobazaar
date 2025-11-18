@@ -1,0 +1,260 @@
+/* 🌿 PAGE CONTAINER */
+.buyer-track-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e8fff1, #dbffe8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Poppins", sans-serif;
+  padding-top: 80px;
+  color: #093b20;
+}
+
+/* 🏷 WRAPPER */
+.track-wrapper {
+  width: 90%;
+  max-width: 900px;
+  margin-top: 40px;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* 🔖 TITLE */
+.track-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  color: #14512f;
+  margin-bottom: 8px;
+}
+
+.order-id-line {
+  text-align: center;
+  font-size: 1rem;
+  color: #195c35;
+  margin-bottom: 25px;
+}
+
+/* 🟩 ORDER CARD */
+.track-card {
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  box-shadow: 0 8px 30px rgba(25, 135, 84, 0.22);
+  border: 1px solid rgba(25, 135, 84, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.track-image {
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: white;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 📝 PRODUCT INFO */
+.track-info h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.track-info p {
+  margin: 2px 0;
+  font-size: 0.95rem;
+}
+
+/* 🟢 STATUS BADGE */
+.track-status-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 25px;
+  font-weight: 700;
+  margin: 6px 0 10px;
+  color: white;
+}
+
+/* 💚 Dynamic STATUS colors */
+.track-status-badge.pending { background: #adb5bd; }
+.track-status-badge.processing { background: #157347; }
+.track-status-badge.shipped { background: #0d6efd; }
+.track-status-badge.out-for-delivery { background: #e67e22; }
+.track-status-badge.delivered { background: #198754; }
+
+/* ❌ Cancel + Return */
+.track-status-badge.cancelled,
+.cancel-text { background: #dc3545 !important; }
+
+.track-status-badge.returned,
+.return-text { background: #6f42c1 !important; }
+
+/* 📍 TIMELINE SECTION */
+.progress-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 35px 0 15px;
+  text-align: center;
+}
+
+/* 🌿 TIMELINE WRAPPER */
+.timeline {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.timeline-inner {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 780px;
+  position: relative;
+}
+
+/* 🟢 Steps */
+.timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 19%;
+  position: relative;
+}
+
+/* 🟢 Icons */
+.timeline-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #cfe7d9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+  transition: 0.3s;
+  color: #155b38;
+   margin-left: 300px;
+}
+
+.timeline-icon.active {
+  background: #198754;
+  color: white;
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(25, 135, 84, 0.6);
+}
+
+/* Labels */
+.timeline-label {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  color: #195c35;
+  transition: 0.3s;
+   margin-left: 300px;
+}
+
+.timeline-label.active {
+  color: #14512f;
+  font-weight: 800;
+}
+
+/* Connecting Line */
+.timeline-line {
+  position: absolute;
+  top: 25px;
+  left: 50%;
+  width: 100%;
+  height: 4px;
+  background: #b5ccb8;
+  z-index: -1;
+}
+
+.timeline-line.active {
+  background: #1fa862;
+}
+
+/* ❌ CANCELLED BOX */
+.cancel-return-box {
+  text-align: center;
+  width: 100%;
+  padding: 25px;
+  border-radius: 18px;
+  background: rgba(255, 230, 230, 0.7);
+  border: 2px solid #dc3545;
+  box-shadow: 0 0 18px rgba(220, 53, 69, 0.3);
+}
+
+.cancel-icon {
+  font-size: 52px;
+  color: #dc3545;
+}
+
+.return-icon {
+  font-size: 52px;
+  color: #6f42c1;
+}
+
+.cancel-text,
+.return-text {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+/* 🔙 BACK BUTTON */
+.back-btn {
+  margin: 40px auto;
+  display: block;
+  background: #198754;
+  color: white;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.back-btn:hover {
+  background: #0f5132;
+  transform: translateY(-2px);
+}
+
+/* 🔄 Animated Entry */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 768px) {
+
+  .track-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .track-image {
+    width: 120px;
+    height: 120px;
+  }
+
+  .timeline-inner {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .timeline-step {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .timeline-line {
+    display: none;
+  }
+}

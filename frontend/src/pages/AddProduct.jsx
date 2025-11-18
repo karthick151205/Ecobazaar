@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // <-- Import axios
+import axios from "axios"; // Import axios for API calls
 import "./AddProduct.css";
-import SellerNavbar from "../components/SellerNavbar";
-import Footer from "../components/Footer";
+import SellerNavbar from "../components/SellerNavbar.jsx"; // Fixed import
+import Footer from "../components/Footer.jsx"; // Fixed import
 import defaultProduct from "../assets/default-product.png";
 
 const AddProduct = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false); // For loading state
 
   const [product, setProduct] = useState({
     name: "",
@@ -16,146 +17,228 @@ const AddProduct = () => {
     stock: "",
     ecoPoints: "",
     description: "",
-    image: "",
+    image: "", // This will hold the base64 string of the image
   });
-  const [error, setError] = useState(""); // For showing errors
+
+  // This function is no longer needed, the backend will generate IDs
+  // const generateProductId = () => { ... };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProduct((p) => ({ ...p, [name]: value }));
+    setProduct((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImage = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
+      // Convert image to a base64 string
       reader.onload = () => setProduct((p) => ({ ...p, image: reader.result }));
       reader.readAsDataURL(file);
     }
   };
 
-  // --- THIS IS THE UPDATED SUBMIT FUNCTION ---
+  /**
+   * NEW: This function now sends data to the Spring Boot backend.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear old errors
+    setIsSubmitting(true);
 
-    // 1. Get the JWT token from localStorage
+    if (!product.name || !product.price || !product.stock || !product.description) {
+      alert("⚠️ Please fill in all required fields.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // 1. Get the authentication token from localStorage
+    // (This assumes you store the token as "token" after login)
     const token = localStorage.getItem("token");
-
     if (!token) {
-      alert("⚠️ You must be logged in as a Seller to add a product.");
+      alert("⚠️ You are not logged in. Please log in to add a product.");
+      setIsSubmitting(false);
       navigate("/login"); // Redirect to login
       return;
     }
 
-    // 2. Create the data object to send (must match ProductRequest.java)
+    // 2. Prepare the data payload for the backend
+    // The backend will handle ID, sold, and dateAdded
     const productData = {
       name: product.name,
+      description: product.description,
       price: Number(product.price),
       stock: Number(product.stock),
       category: product.category || "Uncategorized",
-      description: product.description,
-      ecoPoints: Number(product.ecoPoints) || 50, // Default to 50
-      image: product.image || defaultProduct, // Send the Base64 string
+      ecoPoints: product.ecoPoints ? Number(product.ecoPoints) : 50,
+      // Send the base64 image string
+      image: product.image || "", 
     };
 
+    // 3. Make the API call in a try...catch block
     try {
-      // 3. Make the API call, sending the token in the header
+      // We use the full URL to your Spring Boot backend (running on port 3080)
+      // The endpoint is likely /api/products or /api/products/add
       const response = await axios.post(
-        "http://localhost:3080/api/products",
+        "http://localhost:3080/api/products/add",
         productData,
         {
           headers: {
-            "Authorization": `Bearer ${token}`, // This is the security!
+            "Content-Type": "application/json",
+            // This is the crucial part for Spring Security (JWT)
+            "Authorization": `Bearer ${token}`,
           },
         }
       );
 
-      // It worked!
-      alert("✅ Product added successfully!");
-      console.log("Server response:", response.data);
-      navigate("/my-products"); // take seller to MyProducts page
-
-    } catch (err) {
-      // 4. Handle errors
-      console.error("Failed to add product:", err);
-      if (err.response && err.response.status === 403) {
-        // 403 Forbidden means they are not a SELLER
-        alert("Error: You do not have permission to add a product. Please log in as a Seller.");
-        setError("You do not have permission to add a product.");
+      // Handle success
+      if (response.status === 201 || response.status === 200) {
+        alert("✅ Product added successfully!");
+        navigate("/my-products");
       } else {
-        alert("Error adding product. Please try again.");
-        setError("An error occurred. Please try again.");
+        alert(`⚠️ Error: ${response.data.message || "Could not add product."}`);
       }
+
+    } catch (error) {
+      // Handle errors
+      console.error("Error adding product:", error);
+      let errorMessage = "⚠️ An unexpected error occurred.";
+      if (error.response) {
+        // The server responded with an error
+        errorMessage = `⚠️ Server Error: ${error.response.data.message || error.response.statusText}`;
+      } else if (error.request) {
+        // No response was received from the server
+        errorMessage = "⚠️ No response from server. Is the backend running?";
+      }
+      alert(errorMessage);
+    } finally {
+      // This runs whether the call succeeded or failed
+      setIsSubmitting(false);
     }
   };
-  // --- END OF UPDATE ---
 
   return (
-    <div className="add-product-container">
+    <div className="add-product-page">
       <SellerNavbar />
-      <div className="form-wrapper">
-        <h2>🌿 Add New Eco Product</h2>
 
-        <form onSubmit={handleSubmit} className="add-form">
-          {/* All your form inputs are the same */}
-          <input
-            type="text"
-            name="name"
-            placeholder="Product Name"
-            value={product.name}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="number"
-            name="price"
-            placeholder="Price (₹)"
-            value={product.price}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="number"
-            name="stock"
-            placeholder="Available Stock"
-            value={product.stock}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="number"
-            name="ecoPoints"
-            placeholder="Eco Points (1 - 100)"
-            value={product.ecoPoints}
-            onChange={handleChange}
-            min="1"
-            max="100"
-          />
-          <textarea
-            name="description"
-            placeholder="Enter product description..."
-            value={product.description}
-            onChange={handleChange}
-            required
-            rows="4"
-          />
-          <select name="category" value={product.category} onChange={handleChange}>
-            <option value="">Select Category (optional)</option>
-            <option>Accessories</option>
-            <option>Home</option>
-            <option>Electronics</option>
-            <option>Stationery</option>
-            <option>Clothing</option>
-          </select>
+      <div className="add-modal-overlay">
+        <div className="add-modal">
+          <div className="modal-header">
+            <h2>🌱 Add New Product</h2>
+            <button className="close-btn" onClick={() => navigate("/my-products")}>
+              ✖
+            </button>
+          </div>
 
-          <input type="file" accept="image/*" onChange={handleImage} />
-          <img src={product.image || defaultProduct} alt="Preview" className="preview" />
-          
-          {error && <p className="auth-error">{error}</p>}
+          <form onSubmit={handleSubmit} className="modal-form">
+            {/* Product Image Upload */}
+            <div className="image-section">
+              <img
+                src={product.image || defaultProduct}
+                alt="Preview"
+                className="preview-image"
+                onError={(e) => { e.target.src = defaultProduct; }} // Fallback
+              />
+              <label className="upload-btn">
+                📸 Upload Image
+                <input type="file" accept="image/*" onChange={handleImage} />
+              </label>
+            </div>
 
-          <button type="submit">Add Product</button>
-        </form>
+            {/* Form Inputs (No changes needed here) */}
+            <div className="input-grid">
+              <div className="input-field">
+                <label>Product Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={product.name}
+                  onChange={handleChange}
+                  placeholder="Eco Bamboo Brush"
+                  required
+                />
+              </div>
+
+              <div className="input-field">
+                <label>Price (₹)</label>
+                <input
+                  type="number"
+                  name="price"
+                  min="0"
+                  value={product.price}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="input-field">
+                <label>Stock</label>
+                <input
+                  type="number"
+                  name="stock"
+                  min="0"
+                  value={product.stock}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="input-field">
+                <label>Category</label>
+                <select
+                  name="category"
+                  value={product.category}
+                  onChange={handleChange}
+                >
+                  <option value="">Select Category</option>
+                  <option>Accessories</option>
+                  <option>Home</option>
+                  <option>Electronics</option>
+                  <option>Stationery</option>
+                  <option>Clothing</option>
+                </select>
+              </div>
+
+              <div className="input-field">
+                <label>Eco Points (1-100)</label>
+                <input
+                  type="number"
+                  name="ecoPoints"
+                  value={product.ecoPoints}
+                  onChange={handleChange}
+                  min="1"
+                  max="100"
+                />
+              </div>
+            </div>
+
+            <div className="input-field full-width">
+              <label>Description</label>
+              <textarea
+                name="description"
+                rows="3"
+                value={product.description}
+                onChange={handleChange}
+                placeholder="Enter short product description..."
+                required
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="action-buttons">
+              <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                {isSubmitting ? "Adding..." : "➕ Add Product"}
+              </button>
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={() => navigate("/my-products")}
+                disabled={isSubmitting}
+              >
+                ❌ Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
       <Footer />

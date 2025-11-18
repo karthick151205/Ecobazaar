@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BuyerNavbar from "../components/BuyerNavbar";
 import Footer from "../components/Footer";
-import "./BuyerDashboard.css";
+import "./BuyerOrders.css";
 
 // import product images
 import kurtiImg from "../assets/kurthi.webp";
@@ -58,6 +58,7 @@ function BuyerOrders() {
     ];
   });
 
+  // Save initial data
   useEffect(() => {
     localStorage.setItem("buyerOrders", JSON.stringify(orders));
   }, []);
@@ -67,47 +68,72 @@ function BuyerOrders() {
     localStorage.setItem("buyerOrders", JSON.stringify(updated));
   };
 
-  // Cancel a pending order
+  // Sync to seller side
+  const syncSellerOrders = (orderId, newStatus) => {
+    const ecoOrders = JSON.parse(localStorage.getItem("ecoOrders")) || [];
+    const updatedEco = ecoOrders.map((o) =>
+      o.id === orderId ? { ...o, status: newStatus } : o
+    );
+    localStorage.setItem("ecoOrders", JSON.stringify(updatedEco));
+
+    localStorage.setItem("refreshBuyerPages", String(Date.now()));
+    localStorage.setItem("refreshSellerPages", String(Date.now()));
+  };
+
+  // Cancel pending
   const cancelOrder = (id) => {
-    const ok = window.confirm("Are you sure you want to cancel this order?");
-    if (!ok) return;
+    if (!window.confirm("Cancel order?")) return;
     const updated = orders.map((o) =>
       o.id === id ? { ...o, status: "Cancelled" } : o
     );
     updateOrders(updated);
-    alert("Order cancelled ✅");
+    syncSellerOrders(id, "Cancelled");
+    alert("Order cancelled.");
   };
 
-  // Return a delivered order
+  // Return delivered
   const returnOrder = (id) => {
-    const ok = window.confirm(
-      "Mark this order as RETURNED? (This will notify the seller.)"
-    );
-    if (!ok) return;
+    if (!window.confirm("Return this order?")) return;
     const updated = orders.map((o) =>
       o.id === id ? { ...o, status: "Returned" } : o
     );
     updateOrders(updated);
-    alert("Return processed ✅");
+    syncSellerOrders(id, "Returned");
+    alert("Return processed.");
   };
 
-  // Re-order (demo)
+  // Reorder (demo)
   const reorder = (order) => {
-    alert(`Re-order placed for ${order.productName} (demo)`);
+    alert(`Reorder placed for ${order.productName}`);
   };
 
-  // ✅ View product details on image click
+  // React to seller updates
+  useEffect(() => {
+    const handleStorage = () => {
+      const updated = JSON.parse(localStorage.getItem("buyerOrders")) || [];
+      setOrders(updated);
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  // ===========================
+  // ⭐ NEW – Navigate to tracking
+  // ===========================
+  const goToTrack = (order) => {
+    navigate(`/buyer/track/${order.id}`, { state: { order } });
+  };
+
+  // View product details
   const viewProductDetails = (order) => {
     const product = {
       name: order.productName,
       image: order.image,
       price: order.price,
-      category: order.category || "General",
-      rating: order.rating || 4.0,
-      carbonFootprint: order.carbonPoints || 1.0,
-      carbonPoints: order.carbonPoints || 1.0,
+      category: order.category,
+      rating: order.rating,
+      carbonFootprint: order.carbonPoints,
     };
-
     navigate("/product/:id", { state: { product } });
   };
 
@@ -127,37 +153,30 @@ function BuyerOrders() {
           <div className="orders-list">
             {orders.map((order) => (
               <div key={order.id} className="order-card">
-                {/* 🖼 Clickable Product Image */}
                 <img
                   src={order.image}
                   alt={order.productName}
                   className="order-img clickable"
                   onClick={() => viewProductDetails(order)}
-                  title="Click to view product details"
                 />
 
                 <div className="order-details">
                   <h3>{order.productName}</h3>
 
                   <p>
-                    <strong>Price:</strong> ₹{order.price} × {order.quantity} ={" "}
-                    <b>₹{order.price * order.quantity}</b>
+                    <strong>Amount:</strong> ₹{order.price * order.quantity}
                   </p>
-
                   <p>
                     <strong>Date:</strong> {order.date}
                   </p>
 
-                  <div style={{ marginTop: 8 }}>
-                    <span
-                      className={`status-badge ${order.status.toLowerCase()}`}
-                    >
-                      {order.status}
-                    </span>
-                  </div>
+                  <span className={`status-badge ${order.status.toLowerCase()}`}>
+                    {order.status}
+                  </span>
 
-                  {/* Action Buttons */}
                   <div className="order-actions">
+
+                    {/* ⭐ Pending */}
                     {order.status === "Pending" && (
                       <>
                         <button
@@ -166,29 +185,24 @@ function BuyerOrders() {
                         >
                           Cancel Order
                         </button>
-
                         <button
-                          className="details-btn"
-                          onClick={() => viewProductDetails(order)}
+                          className="track-btn"
+                          onClick={() => goToTrack(order)}
                         >
-                          View Details
+                          Track Order
                         </button>
                       </>
                     )}
 
+                    {/* ⭐ Shipped */}
                     {order.status === "Shipped" && (
                       <>
                         <button
                           className="track-btn"
-                          onClick={() =>
-                            alert(
-                              "Tracking (demo): your package is on the way 🚚"
-                            )
-                          }
+                          onClick={() => goToTrack(order)}
                         >
                           Track Package
                         </button>
-
                         <button
                           className="details-btn"
                           onClick={() => viewProductDetails(order)}
@@ -198,6 +212,7 @@ function BuyerOrders() {
                       </>
                     )}
 
+                    {/* ⭐ Delivered */}
                     {order.status === "Delivered" && (
                       <>
                         <button
@@ -206,33 +221,26 @@ function BuyerOrders() {
                         >
                           Return Item
                         </button>
-
                         <button
-                          className="reorder-btn"
-                          onClick={() => reorder(order)}
+                          className="track-btn"
+                          onClick={() => goToTrack(order)}
                         >
-                          Re-order
+                          Track Timeline
                         </button>
                       </>
                     )}
 
+                    {/* Returned / Cancelled */}
                     {(order.status === "Returned" ||
                       order.status === "Cancelled") && (
-                      <>
-                        <button
-                          className="reorder-btn"
-                          onClick={() => reorder(order)}
-                        >
-                          Re-order
-                        </button>
-                        <button
-                          className="details-btn"
-                          onClick={() => viewProductDetails(order)}
-                        >
-                          View Details
-                        </button>
-                      </>
+                      <button
+                        className="track-btn"
+                        onClick={() => goToTrack(order)}
+                      >
+                        View Timeline
+                      </button>
                     )}
+
                   </div>
                 </div>
               </div>

@@ -146,6 +146,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   max-height: 220px;
   overflow-y: auto;
+  color:white;
   z-index: 100;
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BuyerNavbar from "../components/BuyerNavbar";
 import Footer from "../components/Footer";
@@ -16,10 +16,11 @@ function Cart() {
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem("cartItems")) || [];
     setCart(savedCart);
+
     const points = parseFloat(localStorage.getItem("ecoPoints")) || 0;
     setEcoPoints(points);
 
-    // Determine rank + discount
+    // Rank Logic
     let rank = "Eco Beginner";
     let discountValue = 0;
     let delivery = 50;
@@ -72,9 +73,9 @@ function Cart() {
   const discountAmount = (subtotal * discount) / 100;
   const total = subtotal - discountAmount + deliveryCharge;
 
-  // 🚀 Proceed to buy
-  const handleCheckout = (item) => {
-    navigate("/BuyBox", { state: { product: item } });
+  // 🚀 Checkout — full cart or individual buy
+  const handleCheckout = (items) => {
+    navigate("/BuyBox", { state: { cart: items } });
   };
 
   return (
@@ -96,6 +97,7 @@ function Cart() {
           </div>
         ) : (
           <>
+            {/* 🌱 Cart List */}
             <div className="cart-items">
               {cart.map((item) => (
                 <div key={item.id} className="cart-item-card">
@@ -104,6 +106,7 @@ function Cart() {
                   <div className="cart-details">
                     <h3>{item.name}</h3>
                     <p>₹{item.price}</p>
+
                     <div className="quantity-box">
                       <label>Qty:</label>
                       <input
@@ -115,6 +118,7 @@ function Cart() {
                         }
                       />
                     </div>
+
                     <p>
                       <strong>Total:</strong> ₹{item.price * item.quantity}
                     </p>
@@ -127,9 +131,10 @@ function Cart() {
                     >
                       ❌ Remove
                     </button>
+
                     <button
                       className="buy-btn"
-                      onClick={() => handleCheckout(item)}
+                      onClick={() => handleCheckout([item])} // buy one item only
                     >
                       ✅ Buy Now
                     </button>
@@ -141,6 +146,7 @@ function Cart() {
             {/* 🌿 Summary Section */}
             <div className="cart-summary">
               <h3>🧾 Order Summary</h3>
+
               <p>
                 <strong>Subtotal:</strong> ₹{subtotal.toFixed(2)}
               </p>
@@ -154,14 +160,17 @@ function Cart() {
                 <strong>Delivery:</strong>{" "}
                 {deliveryCharge === 0 ? "Free 🚚" : `₹${deliveryCharge}`}
               </p>
+
               <hr />
+
               <p className="total">
                 <strong>Total Payable:</strong> ₹{total.toFixed(2)}
               </p>
 
+              {/* Checkout entire cart */}
               <button
                 className="checkout-btn"
-                onClick={() => handleCheckout(cart[0])}
+                onClick={() => handleCheckout(cart)}
               >
                 Proceed to Checkout
               </button>

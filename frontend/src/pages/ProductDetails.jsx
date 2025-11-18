@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import BuyerNavbar from "../components/BuyerNavbar";
 import "./ProductDetails.css";
 
+
 function ProductDetails() {
   const location = useLocation();
   const navigate = useNavigate();

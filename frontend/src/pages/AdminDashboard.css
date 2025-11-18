@@ -1,0 +1,152 @@
+.admin-container {
+  display: flex;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+/* ================= SIDEBAR ================= */
+
+.admin-sidebar {
+  width: 240px;
+  background: white;
+  border-right: 1px solid #ddd;
+  padding: 15px 0;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: bold;
+  padding: 15px;
+  color: #0b6d49;
+  text-align: center;
+  border-bottom: 2px solid #e8f5e9;
+}
+
+.sidebar-btn {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 12px 20px;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #555;
+}
+
+.sidebar-btn:hover {
+  background: #e8f5e9;
+}
+
+.active-tab {
+  background: #c8f7d4 !important;
+  font-weight: bold;
+  color: #0f5229;
+}
+
+/* ================= MAIN AREA ================= */
+
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f7fff8;
+}
+
+.admin-topbar {
+  background: white;
+  border-bottom: 1px solid #ccc;
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+}
+
+.admin-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+}
+
+.admin-profile img {
+  border-radius: 50%;
+}
+
+/* ================= CONTENT ================= */
+
+.admin-content {
+  padding: 25px;
+  overflow-y: auto;
+}
+
+.section-title {
+  font-size: 24px;
+  color: #0b6d49;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 13px;
+}
+
+.stat-box {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  font-size: 17px;
+  border-left: 5px solid #0b6d49;
+}
+
+.panel-box {
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+.admin-table{
+  width:100%;
+  border-collapse: collapse;
+  margin-top:15px;
+  font-size:15px;
+}
+.admin-table th{
+  background:#0fa96c;
+  color:white;
+  padding:10px;
+}
+.admin-table td{
+  padding:10px;
+  border-bottom:1px solid #ccc;
+}
+
+.action-btn{
+  background:#0284c7;
+  color:white;
+  border:none;
+  padding:5px 10px;
+  margin-right:8px;
+  cursor:pointer;
+  border-radius:4px;
+}
+.delete-btn{
+  background:#dc2626;
+  color:white;
+  padding:5px 10px;
+  border-radius:4px;
+}
+.status-badge{
+  padding:3px 8px;
+  border-radius:4px;
+}
+.status-badge.active{
+  background:#22c55e;
+  color:white;
+}
+.status-badge.blocked{
+  background:#b91c1c;
+  color:white;
+}

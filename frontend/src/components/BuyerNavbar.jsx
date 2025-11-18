@@ -111,7 +111,7 @@ function BuyerNavbar({ onSearch }) {
 
   const handleProfile = () => {
     setProfileOpen(false);
-    setTimeout(() => navigate("/pages/BuyerProfile"), 150);
+    setTimeout(() => navigate("/buyer/profile"), 150);
   };
 
   return (
@@ -174,7 +174,7 @@ function BuyerNavbar({ onSearch }) {
               <FaHome /> Home
             </a>
 
-            <a onClick={() => navigate("/orders")}>
+            <a onClick={() => navigate("/buyer/orders")}>
               <FaClipboardList /> My Orders
             </a>
 
