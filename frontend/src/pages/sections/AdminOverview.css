@@ -1,0 +1,144 @@
+.overview-container {
+  padding: 20px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #0b8457;
+  margin-bottom: 20px;
+}
+
+/* Grid Layout */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+/* Card Style */
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  text-align: center;
+  transition: 0.3s;
+  border-left: 6px solid transparent;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 8px 18px rgba(0,0,0,0.12);
+}
+
+/* Icon */
+.stat-card .icon {
+  font-size: 40px;
+  margin-bottom: 14px;
+}
+
+/* Value */
+.stat-card .value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #222;
+}
+
+/* Label */
+.stat-card .label {
+  font-size: 15px;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Colored Borders */
+.stat-card.users {
+  border-color: #0b8457;
+}
+
+.stat-card.sellers {
+  border-color: #ff9800;
+}
+
+.stat-card.products {
+  border-color: #1976d2;
+}
+
+.stat-card.eco {
+  border-color: #4caf50;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .value {
+    font-size: 22px;
+  }
+}
+/* Sub-Titles */
+.sub-title {
+  margin-top: 35px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #0b8457;
+}
+
+/* Sales Analytics Grid */
+.sales-grid {
+  margin-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.sales-card {
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-left: 6px solid transparent;
+  transition: 0.3s;
+}
+
+.sales-card:hover {
+  transform: translateY(-5px);
+}
+
+.sales-amount {
+  font-size: 26px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.sales-card.weekly { border-color: #8e44ad; }
+.sales-card.monthly { border-color: #e67e22; }
+.sales-card.yearly { border-color: #2ecc71; }
+
+/* Top Seller */
+.top-seller-card {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-left: 6px solid #0b8457;
+}
+
+.seller-avatar {
+  font-size: 50px;
+}
+
+.seller-name {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.seller-sales {
+  margin: 4px 0 0;
+  color: #555;
+}

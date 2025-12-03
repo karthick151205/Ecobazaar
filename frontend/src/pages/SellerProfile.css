@@ -32,11 +32,11 @@
   box-shadow: 0 15px 45px rgba(25, 135, 84, 0.35);
 }
 
-/* 🌿 Floating Photo */
+/* 🌿 Floating Profile Photo */
 .profile-image {
   position: absolute;
   top: -80px;
-  left: 60%;
+  right: 50%;
   transform: translateX(-50%);
 }
 
@@ -57,18 +57,20 @@
   transform: scale(1.08);
 }
 
-/* 🌿 Photo Upload Buttons (Edit Mode Only) */
-.upload-label {
-  background: linear-gradient(45deg, #198754, #0f5132);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 10px;
-  display: inline-block;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
+/* 🌿 Photo Upload + Remove Buttons */
+.photo-actions {
   margin-top: 12px;
-  transition: 0.3s;
+  display: flex;
+  flex-direction: row;     /* ← SIDE BY SIDE */
+  gap: 12px;               /* spacing between buttons */
+  justify-content: center;
+  align-items: center;
+}
+
+/* keep the existing button styles */
+.upload-label,
+.remove-photo-btn {
+  margin-top: 0;           /* remove extra top gap */
 }
 
 .upload-label:hover {
@@ -79,6 +81,19 @@
 .upload-input {
   display: none;
 }
+
+.remove-photo-btn:hover {
+  background: linear-gradient(45deg, #b02a37, #9b1c1c);
+  transform: translateY(-2px);
+}
+.upload-label,
+.remove-photo-btn {
+  padding: 8px 16px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
 
 /* 🌿 Profile Details Box */
 .profile-details {
@@ -110,7 +125,7 @@
   padding: 10px 14px;
   border: 1px solid rgba(25, 135, 84, 0.2);
   box-shadow: inset 0 0 4px rgba(25, 135, 84, 0.1);
-  transition: 0.3s;
+  transition: 0.3s ease;
 }
 
 .info-row input:focus,
@@ -122,10 +137,10 @@
 
 /* 🌿 Action Buttons */
 .profile-actions {
-  margin-top: 25px;
+  margin-top: 20px;
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 12px;
 }
 
 .profile-actions button {
@@ -134,10 +149,11 @@
   padding: 10px 22px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.3s ease;
   font-size: 0.95rem;
 }
 
+/* Edit */
 .edit-btn {
   background: linear-gradient(45deg, #198754, #0f5132);
   color: white;
@@ -148,6 +164,7 @@
   transform: translateY(-2px);
 }
 
+/* Save */
 .save-btn {
   background: linear-gradient(45deg, #0d6efd, #4dabf7);
   color: white;
@@ -158,6 +175,7 @@
   transform: translateY(-2px);
 }
 
+/* Cancel */
 .cancel-btn {
   background: linear-gradient(45deg, #adb5bd, #6c757d);
   color: white;

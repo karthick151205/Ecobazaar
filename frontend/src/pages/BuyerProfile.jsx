@@ -2,107 +2,194 @@ import React, { useState, useEffect } from "react";
 import BuyerNavbar from "../components/BuyerNavbar";
 import "./BuyerProfile.css";
 import defaultProfile from "../assets/default-profile.jpg";
-import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 
 function BuyerProfile() {
-  const navigate = useNavigate();
+  const buyer = JSON.parse(localStorage.getItem("user")); // Logged-in user
+  const buyerId = buyer?.id;
+  const buyerEmail = buyer?.email;
+  const token = localStorage.getItem("token");
 
-  const [buyer, setBuyer] = useState(() => {
-    const saved = localStorage.getItem("buyerProfile");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          name: "Eco Buyer",
-          email: "buyer@ecobazaarx.com",
-          phone: "9876543210",
-          address: "12, Green Street, Chennai, Tamil Nadu",
-          ecoPoints: parseFloat(localStorage.getItem("ecoPoints")) || 120,
-          profileImg: defaultProfile,
-        };
-  });
-
+  const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
-  const [updatedData, setUpdatedData] = useState(buyer);
-  const [preview, setPreview] = useState(buyer.profileImg);
+  const [updatedData, setUpdatedData] = useState({});
+  const [preview, setPreview] = useState(defaultProfile);
 
-  // 🌱 Sync ecoPoints from localStorage automatically
+  const [ecoPoints, setEcoPoints] = useState(0); // ⭐ REAL EcoPoints
+
+  const encodedEmail = encodeURIComponent(buyerEmail);
+
+  // ==================================================
+  // 1️⃣ FETCH BUYER PROFILE
+  // ==================================================
   useEffect(() => {
-    const syncEcoPoints = () => {
-      const updatedPoints =
-        parseFloat(localStorage.getItem("ecoPoints")) || buyer.ecoPoints;
-      setBuyer((prev) => ({ ...prev, ecoPoints: updatedPoints }));
-      setUpdatedData((prev) => ({ ...prev, ecoPoints: updatedPoints }));
-    };
-
-    syncEcoPoints();
-    window.addEventListener("storage", syncEcoPoints);
-    return () => window.removeEventListener("storage", syncEcoPoints);
+    fetch(`http://localhost:8080/api/user/profile/${encodedEmail}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setProfile(data);
+        setUpdatedData(data);
+        setPreview(data.profileImg || defaultProfile);
+      })
+      .catch((err) => console.error("Profile load error:", err));
   }, []);
 
-  // 🌿 Determine eco rank based on points
-  const getEcoRank = (points) => {
-    if (points >= 300) return { rank: "🌍 Platinum Hero", color: "#00b894" };
-    if (points >= 200) return { rank: "🌿 Gold Guardian", color: "#ffd700" };
-    if (points >= 120) return { rank: "🍃 Silver Saver", color: "#a8dadc" };
-    return { rank: "🌱 Bronze Beginner", color: "#cd7f32" };
+  // ==================================================
+  // 2️⃣ LOAD ECO POINTS FROM BUYER ORDERS (LIVE)
+  // ==================================================
+  const loadEcoPoints = async () => {
+    if (!buyerId) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/orders/buyer/${buyerId}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      const orders = await res.json();
+      if (!Array.isArray(orders)) return;
+
+      // ⭐ Total CarbonPoints for all orders
+      const total = orders.reduce(
+        (sum, order) => sum + (order.totalCarbonPoints || 0),
+        0
+      );
+
+      setEcoPoints(total);
+
+      // Push to localStorage for navbar
+      localStorage.setItem("ecoPoints", total);
+    } catch (err) {
+      console.error("Eco Points loading error:", err);
+    }
   };
 
-  const ecoRank = getEcoRank(buyer.ecoPoints);
+  useEffect(() => {
+    loadEcoPoints();
+  }, []);
 
-  // ✅ Save updated profile
-  const saveProfile = () => {
-    const updatedProfile = { ...updatedData, profileImg: preview };
-    localStorage.setItem("buyerProfile", JSON.stringify(updatedProfile));
-    setBuyer(updatedProfile);
-    setEditing(false);
-    alert("✅ Profile updated successfully!");
-  };
+  if (!profile) return <div className="loading">Loading profile...</div>;
 
-  // ✅ Handle input change
+  // ==================================================
+  // 3️⃣ ECO RANK SYSTEM
+  // ==================================================
+  const ranks = [
+    { name: "Eco Beginner", min: 0, max: 500, color: "#a7f3d0" },
+    { name: "Nature Nurturer", min: 500, max: 1500, color: "#6ee7b7" },
+    { name: "Green Guardian", min: 1500, max: 3000, color: "#34d399" },
+    { name: "Eco Champion", min: 3000, max: Infinity, color: "#059669" },
+  ];
+
+  const getEcoRank = (points) =>
+    ranks.find((r) => points >= r.min && points < r.max) || ranks[0];
+
+  const ecoRank = getEcoRank(ecoPoints);
+
+  // ==================================================
+  // HANDLE INPUT CHANGES
+  // ==================================================
   const handleChange = (e) => {
     setUpdatedData({ ...updatedData, [e.target.name]: e.target.value });
   };
 
-  // ✅ Upload new image
+  // ==================================================
+  // IMAGE UPLOAD
+  // ==================================================
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
-    if (file && ["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    if (!file) return;
+
+    if (["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
+        setUpdatedData({ ...updatedData, profileImg: reader.result });
       };
       reader.readAsDataURL(file);
     } else {
-      alert("Please upload a valid image (JPG, PNG, or WEBP).");
+      alert("Upload JPG, PNG, or WEBP only.");
     }
   };
 
-  // ✅ Remove photo → reset to default
-  const handleRemovePhoto = () => {
+  const removePhoto = () => {
     setPreview(defaultProfile);
-    alert("🖼️ Profile photo reset to default.");
+    setUpdatedData({ ...updatedData, profileImg: null });
+  };
+
+  // ==================================================
+  // SAVE PROFILE
+  // ==================================================
+  const saveProfile = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/user/profile/${encodedEmail}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedData),
+        }
+      );
+
+      const updated = await res.json();
+      setProfile(updated);
+      setEditing(false);
+
+      alert("✔ Profile updated!");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Failed to update profile.");
+    }
   };
 
   return (
     <div className="buyer-container">
-      <BuyerNavbar ecoPoints={buyer.ecoPoints} />
+      <BuyerNavbar ecoPoints={ecoPoints} />
 
       <div className="profile-section">
         <div className="profile-card">
-          {/* 🌿 Eco Rank Badge — top right corner */}
           <div
             className="eco-rank-badge top-right"
             style={{ background: ecoRank.color }}
           >
-            {ecoRank.rank}
-          </div>
-          {/* 🌿 Profile Image */}
-          <div className="profile-image">
-            <img src={preview} alt="Buyer" className="profile-img" />
+            {ecoRank.name}
           </div>
 
-          {/* 🌿 Profile Details */}
+          <div className="profile-image">
+            <img src={preview} alt="Buyer" />
+            {editing && (
+              <div className="photo-actions">
+                <button
+                  className="upload-label"
+                  onClick={() => document.getElementById("buyer-upload").click()}
+                >
+                  Change Photo
+                </button>
+
+                <input
+                  type="file"
+                  id="buyer-upload"
+                  accept=".jpg, .jpeg, .png, .webp"
+                  onChange={handleImageUpload}
+                  style={{ display: "none" }}
+                />
+
+                <button className="remove-photo-btn" onClick={removePhoto}>
+                  Remove Photo
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="profile-details">
             <div className="info-row">
               <label>Name:</label>
@@ -110,26 +197,17 @@ function BuyerProfile() {
                 <input
                   type="text"
                   name="name"
-                  value={updatedData.name}
+                  value={updatedData.name || ""}
                   onChange={handleChange}
                 />
               ) : (
-                <p>{buyer.name}</p>
+                <p>{profile.name}</p>
               )}
             </div>
 
             <div className="info-row">
               <label>Email:</label>
-              {editing ? (
-                <input
-                  type="email"
-                  name="email"
-                  value={updatedData.email}
-                  onChange={handleChange}
-                />
-              ) : (
-                <p>{buyer.email}</p>
-              )}
+              <p>{profile.email}</p>
             </div>
 
             <div className="info-row">
@@ -138,11 +216,11 @@ function BuyerProfile() {
                 <input
                   type="text"
                   name="phone"
-                  value={updatedData.phone}
+                  value={updatedData.phone || ""}
                   onChange={handleChange}
                 />
               ) : (
-                <p>{buyer.phone}</p>
+                <p>{profile.phone || "Not Provided"}</p>
               )}
             </div>
 
@@ -152,20 +230,19 @@ function BuyerProfile() {
                 <textarea
                   name="address"
                   rows="2"
-                  value={updatedData.address}
+                  value={updatedData.address || ""}
                   onChange={handleChange}
                 />
               ) : (
-                <p>{buyer.address}</p>
+                <p>{profile.address || "Not Provided"}</p>
               )}
             </div>
 
             <div className="info-row">
-              <label>EcoPoints:</label>
-              <p className="eco-points">♻️ {buyer.ecoPoints.toFixed(1)} EP</p>
+              <label>Eco Points:</label>
+              <p className="eco-points">♻ {ecoPoints.toFixed(1)} EP</p>
             </div>
 
-            {/* 🌿 Action Buttons */}
             <div className="profile-actions">
               {editing ? (
                 <>
@@ -176,8 +253,8 @@ function BuyerProfile() {
                     className="cancel-btn"
                     onClick={() => {
                       setEditing(false);
-                      setPreview(buyer.profileImg);
-                      setUpdatedData(buyer);
+                      setPreview(profile.profileImg || defaultProfile);
+                      setUpdatedData(profile);
                     }}
                   >
                     ❌ Cancel
@@ -189,27 +266,17 @@ function BuyerProfile() {
                 </button>
               )}
             </div>
-
-            {/* 🌿 Move Change/Remove Photo to bottom */}
-            {editing && (
-              <div className="photo-buttons bottom-buttons">
-                <label htmlFor="upload-photo" className="upload-label">
-                  📸 Change Photo
-                </label>
-                <input
-                  type="file"
-                  id="upload-photo"
-                  accept=".jpg, .jpeg, .png, .webp"
-                  onChange={handleImageUpload}
-                  className="upload-input"
-                />
-                <button className="remove-photo-btn" onClick={handleRemovePhoto}>
-                  ❌ Remove Photo
-                </button>
-              </div>
-            )}
           </div>
         </div>
+      </div>
+
+      {/* ⭐⭐ ADDED — USER HELP REQUEST + ADMIN REPLY SECTION */}
+      <div className="help-section">
+        <h2 className="help-title">📨 Support Replies</h2>
+
+        {buyerEmail && (
+          <HelpReplies email={buyerEmail} token={token} />
+        )}
       </div>
 
       <Footer />
@@ -218,3 +285,45 @@ function BuyerProfile() {
 }
 
 export default BuyerProfile;
+
+/* ⭐⭐⭐ SMALL COMPONENT TO LOAD USER HELP REQUESTS + REPLIES */
+function HelpReplies({ email, token }) {
+  const [helpList, setHelpList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`http://localhost:8080/api/admin/help/user/${encodeURIComponent(email)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setHelpList(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [email, token]);
+
+  if (loading) return <p className="help-loading">Loading help messages...</p>;
+
+  return (
+    <div className="help-reply-container">
+      {helpList.length === 0 ? (
+        <p className="no-help">No help messages yet.</p>
+      ) : (
+        helpList.map((item) => (
+          <div key={item.id} className="help-card-user">
+            <p><strong>Your Message:</strong> {item.message}</p>
+
+            {item.reply ? (
+              <p className="admin-reply">
+                <strong>Admin Reply:</strong> {item.reply}
+              </p>
+            ) : (
+              <p className="pending-reply">⏳ Waiting for admin reply…</p>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}

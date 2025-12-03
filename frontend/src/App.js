@@ -21,7 +21,9 @@ import AddProduct from "./pages/AddProduct";
 import EcoRankPage from "./pages/EcoRankPage";
 import Sales from "./pages/Sales";
 import BuyerTrackPage from "./pages/BuyerTrackPage";
-import SellerTrackPage from "./pages/SellerTrackPage";  // ✅ FIXED IMPORT
+import SellerTrackPage from "./pages/SellerTrackPage";
+import GoogleSuccess from "./pages/GoogleSuccess";
+import Chatbot from "./components/ChatBot.jsx";
 
 /* 🔐 Popups */
 import LoginPopup from "./LoginPopup";
@@ -37,21 +39,23 @@ function App() {
     fetchProducts();
   }, []);
 
+  // 🌿 Fetch Products
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:3080/api/products");
+      const response = await axios.get("http://localhost:8080/api/products");
       setProducts(response.data);
     } catch (error) {
       console.error("Error fetching products:", error);
     }
   };
 
+  // ✏️ Edit Product
   const handleEditProduct = async (updatedProduct) => {
     try {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `http://localhost:3080/api/products/${updatedProduct.id}`,
+        `http://localhost:8080/api/products/${updatedProduct.id}`,
         updatedProduct,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -65,12 +69,13 @@ function App() {
     }
   };
 
+  // ❌ Delete Product
   const handleDeleteProduct = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         const token = localStorage.getItem("token");
 
-        await axios.delete(`http://localhost:3080/api/products/${id}`, {
+        await axios.delete(`http://localhost:8080/api/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -92,71 +97,172 @@ function App() {
     setShowSignup(true);
   };
 
+  // 🔐 ROLE PROTECTION COMPONENT
+  const ProtectedRoute = ({ element: Component, allowedRoles }) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || !role) {
+      alert("Please login to continue.");
+      return <Home />;
+    }
+
+    if (!allowedRoles.includes(role.toUpperCase())) {
+      alert("Access denied.");
+      return <Home />;
+    }
+
+    return <Component />;
+  };
+
   return (
     <Router>
-      {showLogin && (
-        <LoginPopup
-          onClose={() => setShowLogin(false)}
-          onSwitchToSignup={openSignup}
-        />
-      )}
+      <div className="app-wrapper">
+        {/* Authentication popups */}
+        {showLogin && (
+          <LoginPopup
+            onClose={() => setShowLogin(false)}
+            onSwitchToSignup={openSignup}
+          />
+        )}
 
-      {showSignup && (
-        <SignupPopup
-          onClose={() => setShowSignup(false)}
-          onSwitchToLogin={openLogin}
-        />
-      )}
+        {showSignup && (
+          <SignupPopup
+            onClose={() => setShowSignup(false)}
+            onSwitchToLogin={openLogin}
+          />
+        )}
 
-      <Routes>
-        {/* 🏠 Home */}
-        <Route path="/" element={<Home />} />
+        {/* PAGE CONTENT WRAPPER (Important for footer) */}
+        <div className="page-content">
+          <Routes>
+            {/* 🏠 Home */}
+            <Route path="/" element={<Home />} />
+            <Route path="/oauth-success" element={<GoogleSuccess />} />
 
-        {/* 👤 Buyer */}
-        <Route
-          path="/BuyerDashboard"
-          element={<BuyerDashboard onOpenSignup={openSignup} />}
-        />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/buyer/profile" element={<BuyerProfile />} /> {/* ❗ FIXED */}
-        <Route path="/buyer/orders" element={<BuyerOrders />} />
-        <Route path="/buybox" element={<BuyBox />} />
-        <Route path="/PaymentPortal" element={<PaymentPortal />} />
-        <Route path="/EcoRankPage" element={<EcoRankPage />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/buyer/track/:id" element={<BuyerTrackPage />} />
-
-        {/* 🏪 Seller */}
-        <Route
-          path="/SellerDashboard"
-          element={
-            <SellerDashboard
-              products={products}
-              onEdit={handleEditProduct}
-              onDelete={handleDeleteProduct}
+            {/* 👤 Buyer Protected Routes */}
+            <Route
+              path="/BuyerDashboard"
+              element={
+                <ProtectedRoute
+                  element={() => <BuyerDashboard onOpenSignup={openSignup} />}
+                  allowedRoles={["BUYER"]}
+                />
+              }
             />
-          }
-        />
-        <Route
-          path="/my-products"
-          element={
-            <MyProducts
-              products={products}
-              onEdit={handleEditProduct}
-              onDelete={handleDeleteProduct}
-            />
-          }
-        />
-        <Route path="/view-sold-products" element={<ViewSoldProducts />} />
-        <Route path="/seller-orders" element={<SellerOrders />} />
-        <Route path="/seller/profile" element={<SellerProfile />} />
-        <Route path="/seller/sales" element={<Sales />} />
-        <Route path="/seller/add-product" element={<AddProduct />} />
-        <Route path="/seller/track/:id" element={<SellerTrackPage />} /> {/* ✅ FIXED */}
 
-        {/* 🧑‍💼 Admin */}
-        <Route path="/AdminDashboard" element={<AdminDashboard />} />
-      </Routes>
+            <Route
+              path="/buyer/profile"
+              element={<ProtectedRoute element={BuyerProfile} allowedRoles={["BUYER"]} />}
+            />
+
+            <Route
+              path="/buyer/orders"
+              element={<ProtectedRoute element={BuyerOrders} allowedRoles={["BUYER"]} />}
+            />
+
+            <Route
+              path="/buybox"
+              element={<ProtectedRoute element={BuyBox} allowedRoles={["BUYER"]} />}
+            />
+
+            <Route
+              path="/PaymentPortal"
+              element={<ProtectedRoute element={PaymentPortal} allowedRoles={["BUYER"]} />}
+            />
+
+            <Route
+              path="/EcoRankPage"
+              element={<ProtectedRoute element={EcoRankPage} allowedRoles={["BUYER"]} />}
+            />
+
+            <Route
+              path="/cart"
+              element={<ProtectedRoute element={Cart} allowedRoles={["BUYER"]} />}
+            />
+
+            <Route
+              path="/buyer/track/:id"
+              element={<ProtectedRoute element={BuyerTrackPage} allowedRoles={["BUYER"]} />}
+            />
+
+            {/* 🏪 Seller Protected Routes */}
+            <Route
+              path="/SellerDashboard"
+              element={
+                <ProtectedRoute
+                  element={() => (
+                    <SellerDashboard
+                      products={products}
+                      onEdit={handleEditProduct}
+                      onDelete={handleDeleteProduct}
+                    />
+                  )}
+                  allowedRoles={["SELLER"]}
+                />
+              }
+            />
+
+            <Route
+              path="/my-products"
+              element={
+                <ProtectedRoute
+                  element={() => (
+                    <MyProducts
+                      products={products}
+                      onEdit={handleEditProduct}
+                      onDelete={handleDeleteProduct}
+                    />
+                  )}
+                  allowedRoles={["SELLER"]}
+                />
+              }
+            />
+
+            <Route
+              path="/view-sold-products"
+              element={<ProtectedRoute element={ViewSoldProducts} allowedRoles={["SELLER"]} />}
+            />
+
+            <Route
+              path="/seller-orders"
+              element={<ProtectedRoute element={SellerOrders} allowedRoles={["SELLER"]} />}
+            />
+
+            <Route
+              path="/seller/profile"
+              element={<ProtectedRoute element={SellerProfile} allowedRoles={["SELLER"]} />}
+            />
+
+            <Route
+              path="/seller/sales"
+              element={<ProtectedRoute element={Sales} allowedRoles={["SELLER"]} />}
+            />
+
+            <Route
+              path="/seller/add-product"
+              element={<ProtectedRoute element={AddProduct} allowedRoles={["SELLER"]} />}
+            />
+
+            <Route
+              path="/seller/track/:id"
+              element={<ProtectedRoute element={SellerTrackPage} allowedRoles={["SELLER"]} />}
+            />
+
+            {/* 🧑‍💼 Admin */}
+            <Route
+              path="/AdminDashboard"
+              element={<ProtectedRoute element={AdminDashboard} allowedRoles={["ADMIN"]} />}
+            />
+
+            {/* Product Details */}
+            <Route path="/product/:id" element={<ProductDetails />} />
+          </Routes>
+        </div>
+
+        {/* Chatbot is outside content but inside wrapper */}
+        <Chatbot />
+      </div>
     </Router>
   );
 }

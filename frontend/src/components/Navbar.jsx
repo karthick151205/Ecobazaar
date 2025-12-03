@@ -4,11 +4,13 @@ import "./Navbar.css";
 import logo from "../assets/logo.png";
 import LoginPopup from "../LoginPopup";
 import SignupPopup from "../SignupPopup";
+import HelpPopup from "../components/HelpPopup"; // ⭐ NEW IMPORT
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [showHelp, setShowHelp] = useState(false); // ⭐ NEW STATE
   const navigate = useNavigate();
 
   return (
@@ -27,6 +29,17 @@ function Navbar() {
           <div className="nav-links">
             <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
               Home
+            </a>
+
+            {/* ⭐ NEW HELP BUTTON */}
+            <a
+              href="#help"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowHelp(true);
+              }}
+            >
+              Help
             </a>
 
             <a
@@ -60,9 +73,10 @@ function Navbar() {
           </div>
         </div>
 
-        {/* ✅ Mobile Dropdown Menu */}
+        {/* Mobile Dropdown */}
         {menuOpen && (
           <div className="dropdown-menu">
+
             <a
               href="/"
               onClick={(e) => {
@@ -72,6 +86,18 @@ function Navbar() {
               }}
             >
               Home
+            </a>
+
+            {/* ⭐ HELP IN MOBILE TOO */}
+            <a
+              href="#help"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowHelp(true);
+                setMenuOpen(false);
+              }}
+            >
+              Help
             </a>
 
             <a
@@ -101,7 +127,7 @@ function Navbar() {
         )}
       </nav>
 
-      {/* ✅ Popups */}
+      {/* Login Popup */}
       {showLogin && (
         <LoginPopup
           onClose={() => setShowLogin(false)}
@@ -112,6 +138,7 @@ function Navbar() {
         />
       )}
 
+      {/* Signup Popup */}
       {showSignup && (
         <SignupPopup
           onClose={() => setShowSignup(false)}
@@ -121,6 +148,9 @@ function Navbar() {
           }}
         />
       )}
+
+      {/* ⭐ HELP POPUP */}
+      {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
     </>
   );
 }

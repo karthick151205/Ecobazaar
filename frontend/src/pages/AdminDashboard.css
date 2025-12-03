@@ -150,3 +150,416 @@
   background:#b91c1c;
   color:white;
 }
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-table th {
+  background: #2e7d32;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+.admin-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-table tr:hover {
+  background: #f5f5f5;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.admin-table th {
+  background: #2e7d32;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+.admin-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-table tr:hover {
+  background: #f2f2f2;
+}
+.delete-btn {
+  padding: 6px 12px;
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #b71c1c;
+}
+.approve-btn {
+  padding: 6px 12px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.reject-btn {
+  padding: 6px 12px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+.admin-profile img {
+    /* Ensures the image is square before making it round (adjust height/width as needed) */
+    width: 50px;
+    height: 50px;
+
+    /* This rule makes the image perfectly round */
+    border-radius: 50%;
+
+    /* Optional: Ensures the image covers the entire circular area without stretching */
+    object-fit: cover;
+}
+
+
+.logout-btn {
+  padding: 6px 12px;
+  background: #ff4b4b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #d60000;
+}
+/* 🌿 Main Page */
+.add-product-page {
+  background: #f1fdf2;
+  min-height: 100vh;
+  font-family: "Poppins", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🌫️ Dark Overlay */
+.add-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 2000;
+}
+
+/* 📦 Modal Box */
+.add-modal {
+  width: 620px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 25px 30px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.4s ease;
+}
+
+/* 🔥 Modal Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.modal-header h2 {
+  font-size: 1.6rem;
+  color: #0f5132;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.close-btn:hover {
+  color: red;
+  transform: scale(1.1);
+}
+
+/* FORM */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 📸 Image Preview */
+.image-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-image {
+  width: 160px;
+  height: 160px;
+  border-radius: 14px;
+  border: 2px solid #85c48c;
+  object-fit: cover;
+}
+
+/* Upload Button */
+.upload-btn {
+  display: inline-block;
+  background: #0f5132;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.upload-btn:hover {
+  background: #0c4028;
+}
+
+.upload-btn input {
+  display: none;
+}
+
+/* GRID INPUTS */
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+/* Fields */
+.input-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-field label {
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #145a38;
+  font-weight: 600;
+}
+
+.input-field input,
+.input-field select,
+.input-field textarea {
+  padding: 10px;
+  border: 1.7px solid #bcdccc;
+  border-radius: 10px;
+  outline: none;
+  transition: 0.2s;
+  background: #f9fef9;
+}
+
+.input-field input:focus,
+.input-field select:focus,
+.input-field textarea:focus {
+  border-color: #0f5132;
+}
+
+/* Full width textarea */
+.full-width {
+  grid-column: 1 / span 2;
+}
+
+/* Buttons */
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.submit-btn,
+.cancel-btn {
+  width: 48%;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.submit-btn {
+  background: #198754;
+  color: white;
+}
+
+.submit-btn:hover {
+  background: #146c43;
+}
+
+.cancel-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #bb2d3b;
+}
+
+.submit-btn:disabled,
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 650px) {
+  .add-modal {
+    width: 95%;
+  }
+
+  .input-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: 1 / 1;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .submit-btn,
+  .cancel-btn {
+    width: 100%;
+  }
+}
+/* Edit/Delete Buttons */
+.edit-btn {
+  padding: 5px 10px;
+  background: #0277bd;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background: #015a8b;
+}
+
+.delete-btn {
+  padding: 5px 10px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #b71c1c;
+}
+
+/* Popup Overlay */
+.edit-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* Popup Box */
+.edit-popup {
+  background: white;
+  padding: 25px;
+  width: 350px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  animation: popupFade 0.3s ease;
+}
+
+@keyframes popupFade {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.edit-popup input,
+.edit-popup select {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Buttons inside popup */
+.popup-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.save-btn {
+  background: #2e7d32;
+  color: white;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 6px;
+}
+
+.cancel-btn {
+  background: #616161;
+  color: white;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 6px;
+}

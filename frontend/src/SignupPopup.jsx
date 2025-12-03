@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import "./pages/AuthPopup.css";
-import axios from "axios"; // <-- IMPORT AXIOS
 
 function SignupPopup({ onClose, onSwitchToLogin }) {
   const [formData, setFormData] = useState({
@@ -8,65 +7,73 @@ function SignupPopup({ onClose, onSwitchToLogin }) {
     email: "",
     password: "",
   });
-  const [role, setRole] = useState("BUYER");
-  // We add this to show errors from the server
-  const [error, setError] = useState(""); 
 
+  const [role, setRole] = useState("BUYER"); // default role
+  const [loading, setLoading] = useState(false);
+
+  // Handle input changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- THIS IS THE UPDATED SUBMIT FUNCTION ---
+  // 🚀 Handle Signup API Call
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear old errors
+    setLoading(true);
+
+    // Prevent ADMIN signup from frontend
+    if (role === "ADMIN") {
+      alert("❌ Admin account cannot be created.\nAdmin login is fixed by system.");
+      setLoading(false);
+      return;
+    }
+
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role: role, // BUYER or SELLER
+    };
 
     try {
-      // Create the data object to send
-      const signupData = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: role,
-      };
+      const response = await fetch("http://localhost:8080/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      // Make the API call
-      const response = await axios.post(
-        "http://localhost:3080/api/auth/signup",
-        signupData
-      );
+      const text = await response.text();
 
-      // It worked!
-      alert(response.data); // "User registered successfully!"
-      onSwitchToLogin(); // Switch to login popup
-    } catch (err) {
-      // It failed
-      if (err.response) {
-        // The server sent back an error (e.g., "Email is already taken!")
-        setError(err.response.data);
-        alert(err.response.data);
+      if (response.ok) {
+        alert(`🎉 ${text}`);
+        onClose(); // Close popup after signup
       } else {
-        // Other error (e.g., network down)
-        setError("Signup failed. Please try again.");
-        alert("Signup failed. Please try again.");
+        alert(`⚠️ Signup failed: ${text}`);
       }
+    } catch (error) {
+      console.error("Signup Error:", error);
+      alert("Server error. Please try again.");
     }
+
+    setLoading(false);
   };
-  // --- END OF UPDATE ---
 
   return (
     <div className="auth-overlay">
       <div className="auth-popup">
-        {/* ✖ Close Icon (Your friend's code) */}
+
+        {/* Close Button */}
         <span className="close-icon" onClick={onClose}>
           ✖
         </span>
 
         <h2>Create Your EcoBazaarX Account 🌿</h2>
-        
-        {/* We use our new handleSubmit function here */}
+        <p className="subtitle">Join the green revolution.</p>
+
+        {/* Signup Form */}
         <form onSubmit={handleSubmit} className="auth-form">
-          {/* All your friend's inputs are here */}
+
+          {/* Full Name */}
           <input
             type="text"
             name="name"
@@ -76,6 +83,8 @@ function SignupPopup({ onClose, onSwitchToLogin }) {
             required
             className="auth-input"
           />
+
+          {/* Email */}
           <input
             type="email"
             name="email"
@@ -85,6 +94,8 @@ function SignupPopup({ onClose, onSwitchToLogin }) {
             required
             className="auth-input"
           />
+
+          {/* Password */}
           <input
             type="password"
             name="password"
@@ -94,6 +105,8 @@ function SignupPopup({ onClose, onSwitchToLogin }) {
             required
             className="auth-input"
           />
+
+          {/* 🌿 Role Selection */}
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
@@ -105,25 +118,27 @@ function SignupPopup({ onClose, onSwitchToLogin }) {
             <option value="ADMIN">Admin</option>
           </select>
 
-          {/* This will show an error if one exists */}
-          {error && <p className="auth-error">{error}</p>}
-
-          <button type="submit" className="auth-btn">
-            Sign Up
+          {/* Signup Button */}
+          <button type="submit" className="auth-btn" disabled={loading}>
+            {loading ? "Signing up..." : "Sign Up"}
           </button>
         </form>
 
+        {/* Switch to Login */}
         <p className="auth-switch">
           Already have an account?{" "}
           <span onClick={onSwitchToLogin}>Login here</span>
         </p>
 
-        {/* 🌍 Social signup buttons (Your friend's code) */}
+        {/* Social Signup */}
         <div className="social-signup">
           <p>Or sign up with:</p>
           <div className="social-buttons">
+            
             <a
-              href="http://localhost:3080/oauth2/authorization/google"
+              href="https://accounts.google.com/o/oauth2/auth"
+              target="_blank"
+              rel="noopener noreferrer"
               className="social-btn"
             >
               <img
@@ -133,6 +148,7 @@ function SignupPopup({ onClose, onSwitchToLogin }) {
               />
               Google
             </a>
+
             <a
               href="https://www.facebook.com/v11.0/dialog/oauth"
               target="_blank"
@@ -146,6 +162,7 @@ function SignupPopup({ onClose, onSwitchToLogin }) {
               />
               Facebook
             </a>
+
             <a
               href="https://appleid.apple.com/auth/authorize"
               target="_blank"
@@ -159,8 +176,10 @@ function SignupPopup({ onClose, onSwitchToLogin }) {
               />
               Apple
             </a>
+
           </div>
         </div>
+
       </div>
     </div>
   );

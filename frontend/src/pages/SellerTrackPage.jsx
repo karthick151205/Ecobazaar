@@ -1,15 +1,16 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./SellerTrackPage.css";
 import SellerNavbar from "../components/SellerNavbar";
 import Footer from "../components/Footer";
 
 const orderSteps = [
-  "Pending",
-  "Processing",
-  "Shipped",
-  "Out for Delivery",
-  "Delivered",
+  "CONFIRMED",
+  "PROCESSING",
+  "SHIPPED",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
 ];
 
 const SellerTrackPage = () => {
@@ -17,26 +18,81 @@ const SellerTrackPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Order received from SellerOrders.jsx
-  const order = location.state;
+  // Coming from SellerOrders.jsx
+  const order = location.state || null;
 
-  // If direct page load → No order details
+  const orderId = order?.orderId || order?.id;
+  const sellerId = order?.sellerId;
+  const productId = order?.productId;
+
+  const buyerName = order?.buyerName || "";
+  const buyerEmail = order?.buyerEmail || "";
+  const createdAt = order?.createdAt;
+  const totalAmount = order?.totalAmount;
+
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load Seller Item Tracking
+  useEffect(() => {
+    if (!orderId || !sellerId || !productId) {
+      setLoading(false);
+      return;
+    }
+
+    const loadTracking = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/api/orders/track/${orderId}/${sellerId}/${productId}`
+        );
+        setItem(res.data);
+      } catch (err) {
+        console.error("Failed to load tracking:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTracking();
+  }, [orderId, sellerId, productId]);
+
+  // Error when opening directly
   if (!order) {
     return (
       <div className="track-error">
         <h2>⚠ Order Not Found</h2>
         <p>This page must be opened from the Orders page.</p>
-        <button className="back-btn" onClick={() => navigate("/seller/orders")}>
+        <button className="back-btn" onClick={() => navigate("/seller-orders")}>
           ⬅ Return to Orders
         </button>
       </div>
     );
   }
 
-  // Determine progress stage
-  const currentStepIndex = orderSteps.findIndex(
-    (s) => s.toLowerCase() === order.status?.toLowerCase()
-  );
+  if (loading || !item) {
+    return <p className="loading-text">Loading tracking info...</p>;
+  }
+
+  // Use SELLER STATUS, not buyer status
+  const sellerStatus = item?.sellerStatus || "CONFIRMED";
+  const currentStepIndex = orderSteps.findIndex((s) => s === sellerStatus);
+
+  // Update Seller's Individual Item Status
+  const updateStatus = async (newStatus) => {
+    try {
+      await axios.put(
+        `http://localhost:8080/api/orders/update-status/${orderId}/${sellerId}/${productId}`,
+        null,
+        { params: { status: newStatus } }
+      );
+
+      setItem((prev) => ({ ...prev, sellerStatus: newStatus }));
+      alert("Seller status updated successfully!");
+    } catch (err) {
+      console.error("Status update failed:", err);
+      alert("Failed to update status");
+    }
+  };
 
   return (
     <div className="track-page-container">
@@ -45,79 +101,68 @@ const SellerTrackPage = () => {
       <div className="track-wrapper">
         <h1 className="track-title">📍 Order Tracking</h1>
 
-        {/* ORDER ID */}
         <p className="order-id-line">
-          Tracking Order: <strong>{order.orderId || order.id}</strong>
+          Tracking Order: <strong>{orderId}</strong>
         </p>
 
-        {/* MAIN ORDER CARD */}
+        {/* MAIN CARD */}
         <div className="track-card">
           <img
-            src={order.image || "https://via.placeholder.com/180"}
-            alt={order.product}
+            src={item?.imageUrl || "https://via.placeholder.com/180"}
+            alt={item?.productName}
             className="track-image"
           />
 
           <div className="track-info">
-            <h2>{order.product}</h2>
+            <h2>{item?.productName}</h2>
 
-            {/* Status Badge */}
             <span
-              className={`track-status-badge ${order.status
+              className={`track-status-badge ${sellerStatus
                 .toLowerCase()
-                .replace(/\s/g, "-")}`}
+                .replace(/_/g, "-")}`}
             >
-              {order.status}
+              {sellerStatus.replace(/_/g, " ")}
             </span>
 
             <p>
-              <strong>Buyer:</strong> {order.customer}
-            </p>
-            <p>
-              <strong>Quantity:</strong> {order.quantity}
-            </p>
-            <p>
-              <strong>Total Amount:</strong> ₹{order.total}
-            </p>
-            <p>
-              <strong>Placed On:</strong>{" "}
-              {new Date(order.date).toLocaleString()}
+              <strong>Buyer:</strong> {buyerName} ({buyerEmail})
             </p>
 
-            {/* Product ID (optional) */}
-            {order.productId && (
-              <p>
-                <strong>Product ID:</strong>{" "}
-                <span className="track-product-id">{order.productId}</span>
-              </p>
-            )}
+            <p>
+              <strong>Quantity:</strong> {item?.quantity}
+            </p>
+
+            <p>
+              <strong>Total Amount:</strong> ₹{totalAmount}
+            </p>
+
+            <p>
+              <strong>Placed On:</strong>{" "}
+              {createdAt ? new Date(createdAt).toLocaleString() : "--"}
+            </p>
           </div>
         </div>
 
-        {/* PROGRESS TITLE */}
+        {/* TIMELINE */}
         <h2 className="progress-title">Order Progress</h2>
 
-        {/* TIMELINE */}
         <div className="timeline">
           {orderSteps.map((step, index) => (
             <div className="timeline-step" key={step}>
-              {/* Animated Circle */}
               <div
                 className={`circle ${
                   index <= currentStepIndex ? "active" : ""
                 }`}
               ></div>
 
-              {/* Label */}
               <span
                 className={`label ${
                   index <= currentStepIndex ? "active" : ""
                 }`}
               >
-                {step}
+                {step.replace(/_/g, " ")}
               </span>
 
-              {/* Connector Line */}
               {index < orderSteps.length - 1 && (
                 <div
                   className={`line ${
@@ -129,11 +174,19 @@ const SellerTrackPage = () => {
           ))}
         </div>
 
-        {/* BACK BUTTON */}
-        <button
-          className="back-btn"
-          onClick={() => navigate("/seller-orders")}
-        >
+        {/* STATUS BUTTONS */}
+        <h2 className="progress-title">Update Status</h2>
+
+        <div className="status-buttons">
+          <button onClick={() => updateStatus("PROCESSING")}>Processing</button>
+          <button onClick={() => updateStatus("SHIPPED")}>Shipped</button>
+          <button onClick={() => updateStatus("OUT_FOR_DELIVERY")}>
+            Out for Delivery
+          </button>
+          <button onClick={() => updateStatus("DELIVERED")}>Delivered</button>
+        </div>
+
+        <button className="back-btn" onClick={() => navigate("/seller-orders")}>
           ⬅ Back to Orders
         </button>
       </div>

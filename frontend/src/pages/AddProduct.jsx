@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Import axios for API calls
+import axios from "axios";
 import "./AddProduct.css";
-import SellerNavbar from "../components/SellerNavbar.jsx"; // Fixed import
-import Footer from "../components/Footer.jsx"; // Fixed import
+import SellerNavbar from "../components/SellerNavbar.jsx";
+import Footer from "../components/Footer.jsx";
 import defaultProduct from "../assets/default-product.png";
 
 const AddProduct = () => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false); // For loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const sellerId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token");
 
   const [product, setProduct] = useState({
     name: "",
@@ -17,11 +20,24 @@ const AddProduct = () => {
     stock: "",
     ecoPoints: "",
     description: "",
-    image: "", // This will hold the base64 string of the image
+    image: "",
   });
 
-  // This function is no longer needed, the backend will generate IDs
-  // const generateProductId = () => { ... };
+  const [carbonRules, setCarbonRules] = useState(null);
+
+  useEffect(() => {
+    const loadRules = async () => {
+      try {
+        const res = await axios.get("http://localhost:8080/api/admin/carbon-rules", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        setCarbonRules(res.data);
+      } catch (err) {
+        console.log("⚠️ Carbon rules not found, using default.");
+      }
+    };
+    loadRules();
+  }, [token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,90 +46,95 @@ const AddProduct = () => {
 
   const handleImage = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      // Convert image to a base64 string
-      reader.onload = () => setProduct((p) => ({ ...p, image: reader.result }));
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () =>
+      setProduct((prev) => ({ ...prev, image: reader.result }));
+    reader.readAsDataURL(file);
   };
 
-  /**
-   * NEW: This function now sends data to the Spring Boot backend.
-   */
+  const calculateEcoPoints = () => {
+    if (!carbonRules) return product.ecoPoints ? Number(product.ecoPoints) : 50;
+
+    let base = carbonRules.baseEcoPoints || 10;
+    let multiplier = 1;
+
+    switch (product.category?.toLowerCase()) {
+      case "accessories":
+        multiplier = carbonRules.accessoriesMultiplier || 1;
+        break;
+      case "clothing":
+        multiplier = carbonRules.clothingMultiplier || 1;
+        break;
+      case "electronics":
+        multiplier = carbonRules.electronicsMultiplier || 1;
+        break;
+      case "home":
+        multiplier = carbonRules.plasticMultiplier || 1;
+        break;
+      default:
+        multiplier = 1;
+    }
+
+    return Math.min(100, Math.round(base * multiplier));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    if (!sellerId) {
+      alert("⚠️ You must login as seller.");
+      navigate("/");
+      return;
+    }
+
     if (!product.name || !product.price || !product.stock || !product.description) {
-      alert("⚠️ Please fill in all required fields.");
+      alert("⚠️ Fill all required fields.");
       setIsSubmitting(false);
       return;
     }
 
-    // 1. Get the authentication token from localStorage
-    // (This assumes you store the token as "token" after login)
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("⚠️ You are not logged in. Please log in to add a product.");
-      setIsSubmitting(false);
-      navigate("/login"); // Redirect to login
-      return;
-    }
+    const finalEcoPoints =
+      product.ecoPoints && product.ecoPoints !== ""
+        ? Number(product.ecoPoints)
+        : calculateEcoPoints();
 
-    // 2. Prepare the data payload for the backend
-    // The backend will handle ID, sold, and dateAdded
     const productData = {
       name: product.name,
       description: product.description,
       price: Number(product.price),
       stock: Number(product.stock),
-      category: product.category || "Uncategorized",
-      ecoPoints: product.ecoPoints ? Number(product.ecoPoints) : 50,
-      // Send the base64 image string
-      image: product.image || "", 
+      category: product.category || "General",
+      ecoPoints: finalEcoPoints,
+      image: product.image,
     };
 
-    // 3. Make the API call in a try...catch block
     try {
-      // We use the full URL to your Spring Boot backend (running on port 3080)
-      // The endpoint is likely /api/products or /api/products/add
       const response = await axios.post(
-        "http://localhost:3080/api/products/add",
+        `http://localhost:8080/api/seller/product/${sellerId}`,
         productData,
         {
           headers: {
             "Content-Type": "application/json",
-            // This is the crucial part for Spring Security (JWT)
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      // Handle success
-      if (response.status === 201 || response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         alert("✅ Product added successfully!");
         navigate("/my-products");
       } else {
-        alert(`⚠️ Error: ${response.data.message || "Could not add product."}`);
+        alert("⚠️ Failed to add product.");
       }
-
     } catch (error) {
-      // Handle errors
-      console.error("Error adding product:", error);
-      let errorMessage = "⚠️ An unexpected error occurred.";
-      if (error.response) {
-        // The server responded with an error
-        errorMessage = `⚠️ Server Error: ${error.response.data.message || error.response.statusText}`;
-      } else if (error.request) {
-        // No response was received from the server
-        errorMessage = "⚠️ No response from server. Is the backend running?";
-      }
-      alert(errorMessage);
-    } finally {
-      // This runs whether the call succeeded or failed
-      setIsSubmitting(false);
+      console.error("Add Product Error:", error);
+      alert("⚠️ Error adding product.");
     }
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -130,21 +151,19 @@ const AddProduct = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="modal-form">
-            {/* Product Image Upload */}
             <div className="image-section">
               <img
                 src={product.image || defaultProduct}
                 alt="Preview"
                 className="preview-image"
-                onError={(e) => { e.target.src = defaultProduct; }} // Fallback
               />
+
               <label className="upload-btn">
                 📸 Upload Image
                 <input type="file" accept="image/*" onChange={handleImage} />
               </label>
             </div>
 
-            {/* Form Inputs (No changes needed here) */}
             <div className="input-grid">
               <div className="input-field">
                 <label>Product Name</label>
@@ -153,7 +172,6 @@ const AddProduct = () => {
                   name="name"
                   value={product.name}
                   onChange={handleChange}
-                  placeholder="Eco Bamboo Brush"
                   required
                 />
               </div>
@@ -163,9 +181,9 @@ const AddProduct = () => {
                 <input
                   type="number"
                   name="price"
-                  min="0"
                   value={product.price}
                   onChange={handleChange}
+                  min="1"
                   required
                 />
               </div>
@@ -175,31 +193,28 @@ const AddProduct = () => {
                 <input
                   type="number"
                   name="stock"
-                  min="0"
                   value={product.stock}
+                  onChange={handleChange}
+                  min="1"
+                  required
+                />
+              </div>
+
+              {/* ⭐ Updated: Manual category text input */}
+              <div className="input-field">
+                <label>Category</label>
+                <input
+                  type="text"
+                  name="category"
+                  placeholder="Enter or create new category"
+                  value={product.category}
                   onChange={handleChange}
                   required
                 />
               </div>
 
               <div className="input-field">
-                <label>Category</label>
-                <select
-                  name="category"
-                  value={product.category}
-                  onChange={handleChange}
-                >
-                  <option value="">Select Category</option>
-                  <option>Accessories</option>
-                  <option>Home</option>
-                  <option>Electronics</option>
-                  <option>Stationery</option>
-                  <option>Clothing</option>
-                </select>
-              </div>
-
-              <div className="input-field">
-                <label>Eco Points (1-100)</label>
+                <label>Eco Points (optional)</label>
                 <input
                   type="number"
                   name="ecoPoints"
@@ -208,6 +223,12 @@ const AddProduct = () => {
                   min="1"
                   max="100"
                 />
+
+                {product.category && !product.ecoPoints && carbonRules && (
+                  <p className="hint">
+                    Auto Eco Points: <strong>{calculateEcoPoints()}</strong>
+                  </p>
+                )}
               </div>
             </div>
 
@@ -218,16 +239,15 @@ const AddProduct = () => {
                 rows="3"
                 value={product.description}
                 onChange={handleChange}
-                placeholder="Enter short product description..."
                 required
               />
             </div>
 
-            {/* Action Buttons */}
             <div className="action-buttons">
               <button type="submit" className="submit-btn" disabled={isSubmitting}>
                 {isSubmitting ? "Adding..." : "➕ Add Product"}
               </button>
+
               <button
                 type="button"
                 className="cancel-btn"

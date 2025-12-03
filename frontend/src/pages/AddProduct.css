@@ -1,127 +1,223 @@
-.add-product-container {
-  background: linear-gradient(120deg, #f1fdf2, #e6fff2);
+/* 🌿 Main Page */
+.add-product-page {
+  background: #f1fdf2;
   min-height: 100vh;
   font-family: "Poppins", sans-serif;
-}
-
-.form-wrapper {
-  max-width: 600px;
-  margin: 50px auto;
-  background: white;
-  padding: 35px;
-  border-radius: 20px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.form-wrapper h2 {
-  text-align: center;
-  color: #064d21;
-  margin-bottom: 25px;
-}
-
-.add-form {
   display: flex;
   flex-direction: column;
+}
+
+/* 🌫️ Dark Overlay */
+.add-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 2000;
+}
+
+/* 📦 Modal Box */
+.add-modal {
+  width: 620px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 25px 30px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.4s ease;
+}
+
+/* 🔥 Modal Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.modal-header h2 {
+  font-size: 1.6rem;
+  color: #0f5132;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.close-btn:hover {
+  color: red;
+  transform: scale(1.1);
+}
+
+/* FORM */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 📸 Image Preview */
+.image-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-image {
+  width: 160px;
+  height: 160px;
+  border-radius: 14px;
+  border: 2px solid #85c48c;
+  object-fit: cover;
+}
+
+/* Upload Button */
+.upload-btn {
+  display: inline-block;
+  background: #0f5132;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.upload-btn:hover {
+  background: #0c4028;
+}
+
+.upload-btn input {
+  display: none;
+}
+
+/* GRID INPUTS */
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 15px;
 }
 
-.add-form input,
-.add-form select {
-  padding: 10px 14px;
-  border: 2px solid #198754;
-  border-radius: 10px;
-  outline: none;
-  font-size: 15px;
+/* Fields */
+.input-field {
+  display: flex;
+  flex-direction: column;
 }
 
-.add-form input:focus,
-.add-form select:focus {
-  border-color: #0f5132;
-  box-shadow: 0 0 6px #00ff8c;
-}
-
-.add-form button {
-  background: linear-gradient(45deg, #198754, #0f5132);
-  color: white;
+.input-field label {
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #145a38;
   font-weight: 600;
-  border: none;
-  padding: 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: 0.3s;
 }
 
-.add-form button:hover {
-  transform: scale(1.05);
-  background: linear-gradient(45deg, #157347, #0c4128);
-}
-
-.preview {
-  width: 100%;
-  height: 200px;
-  border-radius: 12px;
-  object-fit: cover;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-.add-product-container {
-  background: linear-gradient(180deg, #f3fff5 0%, #e6f8eb 100%);
-  min-height: 100vh;
-  font-family: "Poppins", sans-serif;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-wrapper {
-  margin: 60px auto;
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.add-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.add-form input,
-.add-form select {
+.input-field input,
+.input-field select,
+.input-field textarea {
   padding: 10px;
+  border: 1.7px solid #bcdccc;
   border-radius: 10px;
-  border: 2px solid #b9e8c4;
-  transition: all 0.3s ease;
   outline: none;
+  transition: 0.2s;
+  background: #f9fef9;
 }
 
-.add-form input:focus,
-.add-form select:focus {
-  border-color: #198754;
-  box-shadow: 0 0 6px rgba(25, 135, 84, 0.3);
+.input-field input:focus,
+.input-field select:focus,
+.input-field textarea:focus {
+  border-color: #0f5132;
 }
 
-.preview {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+/* Full width textarea */
+.full-width {
+  grid-column: 1 / span 2;
 }
 
-button {
-  background: linear-gradient(45deg, #198754, #0f5132);
-  color: white;
-  border: none;
+/* Buttons */
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.submit-btn,
+.cancel-btn {
+  width: 48%;
   padding: 12px;
-  border-radius: 25px;
+  font-size: 1rem;
   font-weight: 600;
+  border-radius: 10px;
+  border: none;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.25s ease;
 }
 
-button:hover {
-  background: linear-gradient(45deg, #0f5132, #198754);
-  transform: scale(1.05);
+.submit-btn {
+  background: #198754;
+  color: white;
+}
+
+.submit-btn:hover {
+  background: #146c43;
+}
+
+.cancel-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #bb2d3b;
+}
+
+.submit-btn:disabled,
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 650px) {
+  .add-modal {
+    width: 95%;
+  }
+
+  .input-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: 1 / 1;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .submit-btn,
+  .cancel-btn {
+    width: 100%;
+  }
 }

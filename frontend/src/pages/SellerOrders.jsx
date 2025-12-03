@@ -1,297 +1,218 @@
 // src/pages/SellerOrders.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "./SellerOrders.css";
+
 import SellerNavbar from "../components/SellerNavbar";
 import Footer from "../components/Footer";
+import "./SellerOrders.css";
 
-const SellerOrders = () => {
+function SellerOrders() {
   const navigate = useNavigate();
+
   const [orders, setOrders] = useState([]);
-  const [filter, setFilter] = useState("All");
-  const [newOrderAlert, setNewOrderAlert] = useState(null);
-  const [soundEnabled, setSoundEnabled] = useState(false);
-  const audioRef = useRef(null);
-  const prevOrdersRef = useRef([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load orders initially
-  const loadOrders = () => {
-    const stored = JSON.parse(localStorage.getItem("ecoOrders")) || [];
-    setOrders(stored);
-    prevOrdersRef.current = stored;
-  };
+  // Read logged-in seller user
+  const user = (() => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
 
-  // Setup sound + initial load
+  const token = localStorage.getItem("token");
+
+  /* ------------------------------------
+     🔊 Play notification ONCE on login
+  -------------------------------------- */
   useEffect(() => {
-    loadOrders();
-    audioRef.current = new Audio(
-      "https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b9a26b7eb.mp3?filename=notification-tone-28644.mp3"
-    );
+    const loggedIn = localStorage.getItem("sellerLoggedIn");
 
-    const enableSound = () => {
-      setSoundEnabled(true);
-      window.removeEventListener("click", enableSound);
-    };
-    window.addEventListener("click", enableSound);
+    if (loggedIn === "true") {
+      const audio = new Audio("/audio/new_order.mp3");
+      audio.volume = 1;
+      audio
+        .play()
+        .catch((err) => console.log("Autoplay blocked:", err));
 
-    return () => window.removeEventListener("click", enableSound);
+      localStorage.removeItem("sellerLoggedIn");
+    }
   }, []);
 
-  // Update stock by product id
-  const adjustStock = (productId, amount) => {
-    const items = JSON.parse(localStorage.getItem("ecoProducts")) || [];
-    const updated = items.map((p) =>
-      p.id === productId || p.name === productId
-        ? { ...p, stock: Math.max((p.stock || 0) + amount, 0) }
-        : p
-    );
-    localStorage.setItem("ecoProducts", JSON.stringify(updated));
-    localStorage.setItem("refreshSellerPages", Date.now());
-    localStorage.setItem("refreshBuyerPages", Date.now());
-  };
-
-  // Detect new orders from buyers
+  /* ------------------------------------
+     🔥 Fetch seller-specific orders
+  -------------------------------------- */
   useEffect(() => {
-    const handleStorage = (e) => {
-      if (!e) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-      if (e.key === "ecoOrders") {
-        const updated = JSON.parse(localStorage.getItem("ecoOrders")) || [];
-
-        const prev = prevOrdersRef.current;
-        if (updated.length > prev.length) {
-          const newOnes = updated.filter(
-            (o) => !prev.some((old) => old.id === o.id)
-          );
-
-          if (newOnes.length > 0) {
-            const newest = newOnes[0];
-            setNewOrderAlert(newest);
-
-            adjustStock(
-              newest.productId || newest.product,
-              -Number(newest.quantity || 1)
-            );
-
-            if (soundEnabled && audioRef.current) {
-              audioRef.current.currentTime = 0;
-              audioRef.current.play().catch(() => {});
-            }
-
-            setTimeout(() => setNewOrderAlert(null), 5000);
+    const fetchOrders = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/api/orders/seller/${user.id}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
           }
-        }
-
-        setOrders(updated);
-        prevOrdersRef.current = updated;
-      }
-
-      if (e.key === "refreshSellerPages") {
-        loadOrders();
+        );
+        setOrders(res.data || []);
+      } catch (err) {
+        console.error("Error fetching seller orders", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, [soundEnabled]);
+    fetchOrders();
+  }, [user, token]);
 
-  // Filtered orders
-  const filteredOrders =
-    filter === "All" ? orders : orders.filter((o) => o.status === filter);
-
-  // Update order status + sync buyer pages + stock
-  const updateStatus = (id, newStatus) => {
-    const current = JSON.parse(localStorage.getItem("ecoOrders")) || [];
-    const updated = current.map((o) =>
-      o.id === id ? { ...o, status: newStatus } : o
+  if (!user) {
+    return (
+      <div className="seller-orders-page">
+        <SellerNavbar />
+        <div className="seller-orders-container">
+          <div className="seller-orders-empty">
+            <p>Please login as seller to view your orders.</p>
+            <button onClick={() => navigate("/login")}>Go to Login</button>
+          </div>
+        </div>
+        <Footer />
+      </div>
     );
+  }
 
-    localStorage.setItem("ecoOrders", JSON.stringify(updated));
-
-    // Sync to buyerOrders
-    const buyerOrders = JSON.parse(localStorage.getItem("buyerOrders")) || [];
-    const synced = buyerOrders.map((o) =>
-      o.id === id ? { ...o, status: newStatus } : o
-    );
-    localStorage.setItem("buyerOrders", JSON.stringify(synced));
-
-    const target = current.find((o) => o.id === id);
-
-    if (target) {
-      if (newStatus === "Cancelled" || newStatus === "Returned") {
-        adjustStock(target.productId || target.product, Number(target.quantity));
-      }
-    }
-
-    setOrders(updated);
-    prevOrdersRef.current = updated;
-    localStorage.setItem("refreshSellerPages", Date.now());
-    localStorage.setItem("refreshBuyerPages", Date.now());
-  };
-
-  // Navigate to Track page
-  const goToTrack = (order) => {
-    navigate(`/seller/track/${order.id}`, {
-      state: {
-        orderId: order.id,
-        productId: order.productId,
-        product: order.product,
-        image: order.image,
-        status: order.status,
-        customer: order.customer,
-        quantity: order.quantity,
-        total: order.total,
-        date: order.date,
-      },
-    });
-  };
+  /* ------------------------------------
+       Render Seller Orders
+  -------------------------------------- */
 
   return (
-    <div className="seller-orders-container">
+    <div className="seller-orders-page">
       <SellerNavbar />
 
-      {/* POPUP */}
-      {newOrderAlert && (
-        <div className="order-alert-popup">
-          <div className="alert-left">
-            <img
-              src={
-                newOrderAlert.image || "https://via.placeholder.com/80"
-              }
-              alt=""
-            />
+      <div className="seller-orders-container">
+        <h2>Orders for Your Products</h2>
+
+        {loading ? (
+          <p>Loading orders...</p>
+        ) : orders.length === 0 ? (
+          <div className="seller-orders-empty">
+            <p>No orders for your products yet.</p>
           </div>
-          <div className="alert-right">
-            <div className="title">🛒 New Order Received!</div>
-            <div className="meta">
-              {newOrderAlert.product} — Qty: {newOrderAlert.quantity}
-            </div>
-            <div className="sub">
-              From: {newOrderAlert.customer || "Buyer"}
-            </div>
-          </div>
-        </div>
-      )}
+        ) : (
+          <div className="orders-list">
+            {orders.map((order) => {
+              const sellerItems =
+                order.items?.filter((item) => item.sellerId === user.id) || [];
 
-      <section className="orders-wrapper">
-        <header className="orders-header">
-          <h1>📦 Orders Received</h1>
-          <p>Track and manage all incoming orders.</p>
-        </header>
+              if (sellerItems.length === 0) return null;
 
-        {/* FILTER BAR */}
-        <div className="filter-bar">
-          {[
-            "All",
-            "Pending",
-            "Processing",
-            "Shipped",
-            "Out for Delivery",
-            "Delivered",
-            "Cancelled",
-          ].map((status) => (
-            <button
-              key={status}
-              className={`filter-btn ${
-                filter === status ? "active" : ""
-              }`}
-              onClick={() => setFilter(status)}
-            >
-              {status}
-            </button>
-          ))}
-        </div>
+              const sellerTotal = sellerItems.reduce(
+                (sum, item) => sum + item.price * item.quantity,
+                0
+              );
 
-        {/* ORDERS GRID */}
-        <div className="orders-grid">
-          {filteredOrders.length === 0 ? (
-            <p className="no-orders">No orders found.</p>
-          ) : (
-            filteredOrders.map((order) => (
-              <div className="order-card" key={order.id}>
-                <img
-                  className="order-img"
-                  src={order.image || "https://via.placeholder.com/200"}
-                  alt=""
-                />
+              return (
+                <div className="order-card" key={order.id}>
+                  {/* ------ Order Header ------ */}
+                  <div className="order-header">
+                    <div>
+                      <h4>Order ID: {order.id}</h4>
+                      <p>
+                        Buyer: <strong>{order.buyerName}</strong> (
+                        {order.buyerEmail})
+                      </p>
+                      <p>
+                        Order Date:{" "}
+                        {order.createdAt
+                          ? new Date(order.createdAt).toLocaleString()
+                          : "—"}
+                      </p>
+                    </div>
 
-                <div className="order-details">
-                  <div className="order-top">
-                    <h3 className="order-product">{order.product}</h3>
-                    <span
-                      className={`status-badge ${order.status
-                        .toLowerCase()
-                        .replace(/\s/g, "-")}`}
+                    {/* ⭐ Show Seller Status (Not Buyer Status) ⭐ */}
+                    <div
+                      className={`status-pill status-${sellerItems[0].sellerStatus
+                        ?.toLowerCase()
+                        ?.replace(/_/g, "-")}`}
                     >
-                      {order.status}
-                    </span>
+                      {sellerItems[0].sellerStatus?.replace(/_/g, " ")}
+                    </div>
                   </div>
 
-                  <p className="order-meta">
-                    <strong>Buyer:</strong> {order.customer}
-                  </p>
-                  <p className="order-meta">
-                    <strong>Qty:</strong> {order.quantity}
-                  </p>
-                  <p className="order-meta">
-                    <strong>Amount:</strong> ₹{order.total}
-                  </p>
-                  <p className="order-date">
-                    <strong>Date:</strong>{" "}
-                    {new Date(order.date).toLocaleString()}
-                  </p>
+                  {/* ------ Items for this seller ------ */}
+                  <div className="order-items">
+                    {sellerItems.map((item, index) => {
+                      const image =
+                        item.imageUrl ||
+                        "https://via.placeholder.com/100?text=No+Image";
 
-                  <div className="order-actions">
-                    <button
-                      className="action-btn"
-                      onClick={() => updateStatus(order.id, "Processing")}
-                    >
-                      Processing
-                    </button>
-                    <button
-                      className="action-btn"
-                      onClick={() => updateStatus(order.id, "Shipped")}
-                    >
-                      Shipped
-                    </button>
-                    <button
-                      className="action-btn"
-                      onClick={() =>
-                        updateStatus(order.id, "Out for Delivery")
-                      }
-                    >
-                      Out for Delivery
-                    </button>
-                    <button
-                      className="action-btn"
-                      onClick={() => updateStatus(order.id, "Delivered")}
-                    >
-                      Delivered
-                    </button>
-                    <button
-                      className="cancel-btn"
-                      onClick={() => updateStatus(order.id, "Cancelled")}
-                    >
-                      ❌ Cancel
-                    </button>
+                      return (
+                        <div className="order-item-row" key={index}>
+                          <img
+                            src={image}
+                            alt={item.productName}
+                            onError={(e) => (e.target.style.display = "none")}
+                          />
+                          <div className="item-info">
+                            <h5>{item.productName}</h5>
+                            <p>Qty: {item.quantity}</p>
+                            <p>Price: ₹{item.price}</p>
 
+                            {/* ⭐ Item-Level Status Display ⭐ */}
+                            <p className="seller-status-line">
+                              Status:{" "}
+                              <strong>
+                                {item.sellerStatus?.replace(/_/g, " ")}
+                              </strong>
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* ------ Footer ------ */}
+                  <div className="order-footer">
+                    <div className="order-amount">
+                      <p>Your total for this order</p>
+                      <h4>₹{sellerTotal.toFixed(2)}</h4>
+                    </div>
+
+                    {/* ⭐⭐⭐ Track Button — Correct Seller Status ⭐⭐⭐ */}
                     <button
                       className="track-btn"
-                      onClick={() => goToTrack(order)}
+                      onClick={() =>
+                        navigate(`/seller/track/${order.id}`, {
+                          state: {
+                            orderId: order.id,
+                            sellerId: user.id,
+                            productId: sellerItems[0].productId,
+                            sellerStatus: sellerItems[0].sellerStatus,
+                            date: order.createdAt,
+                            buyerName: order.buyerName,
+                            buyerEmail: order.buyerEmail,
+                            totalAmount: sellerTotal,
+                          },
+                        })
+                      }
                     >
-                      📍 Track
+                      📍 Track Order
                     </button>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <Footer />
     </div>
   );
-};
+}
 
 export default SellerOrders;

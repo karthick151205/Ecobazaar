@@ -8,7 +8,7 @@ export default function AdminSidebar({ active, setActive }) {
     { id: "sellers", label: "🏪 Sellers" },
     { id: "products", label: "📦 Products" },
     { id: "carbon", label: "🌱 Carbon Rules" },
-    { id: "reviews", label: "📝 Reviews" },
+    { id: "reviews", label: "📝 Messages" },
     { id: "settings", label: "⚙ Settings" },
   ];
 

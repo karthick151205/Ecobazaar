@@ -13,6 +13,9 @@ import {
   FaSearch,
 } from "react-icons/fa";
 
+// ⭐ Import HelpPopup
+import HelpPopup from "../components/HelpPopup";
+
 // 🌿 Demo products (for search)
 import cottonBag from "../assets/cotton_bag.jpg";
 import brush from "../assets/brush.webp";
@@ -51,10 +54,25 @@ function BuyerNavbar({ onSearch }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Load Eco Points and determine rank
+  // ⭐ Help Popup State
+  const [showHelpPopup, setShowHelpPopup] = useState(false);
+
+  /* ----------------------------------------------------
+     ⭐ Load Eco Points from backend
+  ---------------------------------------------------- */
   useEffect(() => {
-    const storedPoints = parseFloat(localStorage.getItem("ecoPoints")) || 0;
-    setEcoPoints(storedPoints);
+    const user = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("user"));
+      } catch {
+        return null;
+      }
+    })();
+
+    const buyerId = user?.id;
+    const token = localStorage.getItem("token");
+
+    if (!buyerId) return;
 
     const getRank = (points) => {
       if (points >= 200) return "Eco Champion";
@@ -62,26 +80,43 @@ function BuyerNavbar({ onSearch }) {
       if (points >= 50) return "Nature Nurturer";
       return "Eco Beginner";
     };
-    setEcoRank(getRank(storedPoints));
 
-    const handleStorage = () => {
-      const updatedPoints = parseFloat(localStorage.getItem("ecoPoints")) || 0;
-      setEcoPoints(updatedPoints);
-      setEcoRank(getRank(updatedPoints));
+    const loadEcoPoints = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/orders/buyer/${buyerId}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
+        );
+
+        const orders = await res.json();
+        if (!Array.isArray(orders)) return;
+
+        const totalPoints = orders.reduce(
+          (sum, order) => sum + (order.totalCarbonPoints || 0),
+          0
+        );
+
+        setEcoPoints(totalPoints);
+        setEcoRank(getRank(totalPoints));
+      } catch (err) {
+        console.error("Eco points fetch failed:", err);
+      }
     };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+
+    loadEcoPoints();
   }, []);
 
-  // ✅ Logout confirmation
+  /* ---------------------------------------------------- */
+
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      alert("Logged out successfully ✅");
+      alert("Logged out successfully!");
       navigate("/");
     }
   };
 
-  // ✅ Handle search
   const handleSearch = (e) => {
     if (e.key === "Enter" || e.type === "click") {
       if (!searchTerm.trim()) return;
@@ -91,7 +126,6 @@ function BuyerNavbar({ onSearch }) {
     }
   };
 
-  // ✅ Search suggestions
   useEffect(() => {
     if (!searchTerm.trim()) {
       setSuggestions([]);
@@ -116,6 +150,7 @@ function BuyerNavbar({ onSearch }) {
 
   return (
     <>
+      {/* Overlay */}
       {(menuOpen || profileOpen || ecoDropdownOpen) && (
         <div
           className="overlay"
@@ -128,7 +163,6 @@ function BuyerNavbar({ onSearch }) {
       )}
 
       <nav className="buyer-navbar">
-        {/* 🌿 Logo */}
         <div className="buyer-left" onClick={() => navigate("/BuyerDashboard")}>
           <div className="logo">
             <img src={logo} alt="EcoBazaar Logo" className="logo-img" />
@@ -136,7 +170,7 @@ function BuyerNavbar({ onSearch }) {
           </div>
         </div>
 
-        {/* 🔍 Search */}
+        {/* Search Bar */}
         <div className="search-bar">
           <input
             type="text"
@@ -160,14 +194,16 @@ function BuyerNavbar({ onSearch }) {
                   onClick={() => handleSelectProduct(item)}
                 >
                   <img src={item.image} alt={item.name} />
-                  <span>{item.name} — ₹{item.price}</span>
+                  <span>
+                    {item.name} — ₹{item.price}
+                  </span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* 🌱 Right Section */}
+        {/* Right Section */}
         <div className="buyer-actions">
           <div className="buyer-nav-links">
             <a onClick={() => navigate("/BuyerDashboard")}>
@@ -182,25 +218,31 @@ function BuyerNavbar({ onSearch }) {
               <FaShoppingCart /> Cart
             </a>
 
-            {/* 🌿 Eco Dropdown Trigger */}
+            {/* Eco Rank */}
             <div
               className="eco-dropdown-btn"
               onClick={() => setEcoDropdownOpen(!ecoDropdownOpen)}
             >
-              <a><FaLeaf /> {ecoPoints.toFixed(1)} EP</a>
+              <a>
+                <FaLeaf /> {ecoPoints.toFixed(1)} EP
+              </a>
             </div>
 
             {ecoDropdownOpen && (
               <div className="eco-dropdown">
-                <p><strong>Rank:</strong> {ecoRank}</p>
-                <p><strong>Points:</strong> {ecoPoints.toFixed(1)} EP</p>
+                <p>
+                  <strong>Rank:</strong> {ecoRank}
+                </p>
+                <p>
+                  <strong>Points:</strong> {ecoPoints.toFixed(1)} EP
+                </p>
                 <button onClick={() => navigate("/EcoRankPage")}>
                   View Eco Rank
                 </button>
               </div>
             )}
 
-            {/* 👤 Profile Dropdown */}
+            {/* Profile Dropdown */}
             <div
               className="profile-btn"
               onClick={() => setProfileOpen(!profileOpen)}
@@ -213,6 +255,17 @@ function BuyerNavbar({ onSearch }) {
                 <p onClick={handleProfile}>
                   <FaUser /> My Profile
                 </p>
+
+                {/* ⭐ NEW HELP BUTTON */}
+                <p
+                  onClick={() => {
+                    setProfileOpen(false);
+                    setShowHelpPopup(true);
+                  }}
+                >
+                  ❓ Help & Support
+                </p>
+
                 <p className="logout" onClick={handleLogout}>
                   <FaSignOutAlt /> Logout
                 </p>
@@ -229,34 +282,74 @@ function BuyerNavbar({ onSearch }) {
         </div>
       </nav>
 
-      {/* 📱 Mobile Menu */}
+      {/* Mobile Menu */}
       <div className={`buyer-menu ${menuOpen ? "open" : ""}`}>
-        <span className="close-btn" onClick={() => setMenuOpen(false)}>✕</span>
+        <span className="close-btn" onClick={() => setMenuOpen(false)}>
+          ✕
+        </span>
 
-        <a onClick={() => { navigate("/BuyerDashboard"); setMenuOpen(false); }}>
+        <a
+          onClick={() => {
+            navigate("/BuyerDashboard");
+            setMenuOpen(false);
+          }}
+        >
           <FaHome /> Home
         </a>
 
-        <a onClick={() => { navigate("/BuyerOrders"); setMenuOpen(false); }}>
+        <a
+          onClick={() => {
+            navigate("/BuyerOrders");
+            setMenuOpen(false);
+          }}
+        >
           <FaClipboardList /> My Orders
         </a>
 
-        <a onClick={() => { navigate("/cart"); setMenuOpen(false); }}>
+        <a
+          onClick={() => {
+            navigate("/cart");
+            setMenuOpen(false);
+          }}
+        >
           <FaShoppingCart /> Cart
         </a>
 
-        <a onClick={() => { navigate("/EcoRankPage"); setMenuOpen(false); }}>
+        <a
+          onClick={() => {
+            navigate("/EcoRankPage");
+            setMenuOpen(false);
+          }}
+        >
           <FaLeaf /> {ecoPoints.toFixed(1)} EP ({ecoRank})
         </a>
 
-        <a onClick={() => { setMenuOpen(false); handleProfile(); }}>
+        <a
+          onClick={() => {
+            setMenuOpen(false);
+            handleProfile();
+          }}
+        >
           <FaUser /> My Profile
+        </a>
+
+        {/* ⭐ Help inside mobile menu */}
+        <a
+          onClick={() => {
+            setMenuOpen(false);
+            setShowHelpPopup(true);
+          }}
+        >
+          ❓ Help & Support
         </a>
 
         <a className="logout" onClick={handleLogout}>
           <FaSignOutAlt /> Logout
         </a>
       </div>
+
+      {/* ⭐ SHOW HELPPopup */}
+      {showHelpPopup && <HelpPopup onClose={() => setShowHelpPopup(false)} />}
     </>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./MyProducts.css";
 import SellerNavbar from "../components/SellerNavbar";
 import Footer from "../components/Footer";
+
 import defaultProduct from "../assets/default-product.png";
 import {
   FaLeaf,
@@ -15,73 +16,179 @@ import {
 
 const MyProducts = () => {
   const navigate = useNavigate();
+
+  const user = (() => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const sellerId = user?.id || "";
+  const token = localStorage.getItem("token");
+
   const [products, setProducts] = useState([]);
+  const [sellerOrders, setSellerOrders] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({});
+
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalRevenue: 0,
     avgEcoPoints: 0,
+    ecoImpactScore: 0,
+    totalSold: 0,
   });
 
-  // 🌿 Load Products
-  const loadProducts = () => {
-    const stored = JSON.parse(localStorage.getItem("ecoProducts")) || [];
-    setProducts(stored);
+  const loadProductsRaw = async () => {
+    if (!sellerId) return [];
 
-    if (stored.length > 0) {
-      const totalRevenue = stored.reduce(
-        (sum, p) => sum + p.price * (p.sold || 0),
-        0
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/seller/${sellerId}/products`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
-      const totalEco = stored.reduce((sum, p) => sum + (p.ecoPoints || 0), 0);
-      const avgEco = (totalEco / stored.length).toFixed(1);
 
-      setStats({
-        totalProducts: stored.length,
-        totalRevenue,
-        avgEcoPoints: avgEco,
-      });
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.error("Error loading products:", err);
+      return [];
     }
   };
 
-  useEffect(() => {
-    loadProducts();
+  const loadOrders = async () => {
+    if (!sellerId) return;
 
-    const handleStorage = (event) => {
-      if (event.key === "ecoProducts" || event.key === "refreshSellerPages") {
-        loadProducts();
-      }
-    };
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/orders/seller/${sellerId}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
 
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
-
-  // 🌿 Delete Product
-  const handleDelete = (id) => {
-    if (!window.confirm("🗑 Delete this product?")) return;
-
-    const updated = products.filter((p) => p.id !== id);
-    setProducts(updated);
-
-    localStorage.setItem("ecoProducts", JSON.stringify(updated));
-    localStorage.setItem("refreshSellerPages", Date.now());
-
-    alert("✅ Product deleted!");
+      const data = await res.json();
+      setSellerOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error loading seller orders:", err);
+    }
   };
 
-  // 🌿 Edit Modal
+  const loadProducts = async () => {
+    const rawProducts = await loadProductsRaw();
+    if (!rawProducts.length) {
+      setProducts([]);
+      return;
+    }
+
+    let updatedProducts = [...rawProducts];
+
+    const sellerItems = sellerOrders.flatMap((order) =>
+      (order.items || []).filter(
+        (item) => String(item.sellerId) === String(sellerId)
+      )
+    );
+
+    updatedProducts = updatedProducts.map((prod) => {
+      const soldItems = sellerItems.filter(
+        (i) => String(i.productId) === String(prod.id)
+      );
+
+      const sold = soldItems.reduce(
+        (sum, item) => sum + (item.quantity || 0),
+        0
+      );
+
+      const updatedStock = prod.stock - sold;
+
+      return {
+        ...prod,
+        sold: sold,
+        stock: updatedStock < 0 ? 0 : updatedStock,
+      };
+    });
+
+    setProducts(updatedProducts);
+  };
+
+  useEffect(() => {
+    (async () => {
+      await loadOrders();
+    })();
+  }, []);
+
+  useEffect(() => {
+    loadProducts();
+  }, [sellerOrders]);
+
+  useEffect(() => {
+    const sync = (e) => {
+      if (e.key === "refreshSellerPages") {
+        loadOrders();
+      }
+    };
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
+
+  useEffect(() => {
+    if (!products.length && !sellerOrders.length) return;
+
+    const sellerItems = sellerOrders.flatMap((order) =>
+      (order.items || []).filter(
+        (item) => String(item.sellerId) === String(sellerId)
+      )
+    );
+
+    const totalRevenue = sellerItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    const totalSold = sellerItems.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+
+    const totalEco = products.reduce(
+      (sum, p) => sum + Number(p.ecoPoints || 0),
+      0
+    );
+
+    setStats({
+      totalProducts: products.length,
+      totalRevenue,
+      avgEcoPoints: products.length ? (totalEco / products.length).toFixed(1) : 0,
+      ecoImpactScore: totalEco,
+      totalSold,
+    });
+  }, [products, sellerOrders]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("🗑 Delete this product?")) return;
+
+    await fetch(
+      `http://localhost:8080/api/seller/products/${id}/${sellerId}`,
+      {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+
+    alert("Deleted!");
+    loadOrders();
+  };
+
   const openEditModal = (product) => {
     setEditingProduct(product);
-    setFormData({ ...product });
+    setFormData(product);
   };
 
   const closeModal = () => setEditingProduct(null);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((f) => ({ ...f, [name]: value }));
+    setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
   const handleImage = (e) => {
@@ -94,34 +201,46 @@ const MyProducts = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    const updatedProduct = {
+  const handleSave = async () => {
+    const updated = {
       ...formData,
       price: Number(formData.price),
       stock: Number(formData.stock),
       ecoPoints: Number(formData.ecoPoints),
       sold: Number(formData.sold || 0),
-      dateAdded: formData.dateAdded || new Date().toISOString(),
-      productId: formData.productId, // keep same ID
     };
 
-    const updated = products.map((p) =>
-      p.id === updatedProduct.id ? updatedProduct : p
+    const res = await fetch(
+      `http://localhost:8080/api/seller/products/${editingProduct.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify(updated),
+      }
     );
 
-    setProducts(updated);
-    localStorage.setItem("ecoProducts", JSON.stringify(updated));
-    localStorage.setItem("refreshSellerPages", Date.now());
+    if (!res.ok) return alert("❌ Update failed!");
 
-    alert("✅ Product updated!");
+    alert("Updated Successfully!");
     closeModal();
+    loadOrders();
+  };
+
+  const safeImage = (img) => {
+    if (!img) return defaultProduct;
+    if (img.startsWith("data:image")) return img;
+    if (img.startsWith("http")) return img;
+    if (img.startsWith("/")) return `http://localhost:8080${img}`;
+    return defaultProduct;
   };
 
   return (
     <div className="my-products-page">
       <SellerNavbar />
 
-      {/* Top Bar */}
       <div className="top-bar">
         <h1>🌱 My Eco Products</h1>
         <button
@@ -132,31 +251,38 @@ const MyProducts = () => {
         </button>
       </div>
 
-      {/* Stats */}
       <div className="seller-stats">
         <div className="stat-card">
           <FaBox className="stat-icon box" />
           <h3>{stats.totalProducts}</h3>
           <p>Total Products</p>
         </div>
+
         <div className="stat-card">
           <FaMoneyBillWave className="stat-icon money" />
-          <h3>₹{stats.totalRevenue}</h3>
+          <h3>₹{stats.totalRevenue.toLocaleString()}</h3>
           <p>Total Revenue</p>
         </div>
+
         <div className="stat-card">
           <FaLeaf className="stat-icon leaf" />
           <h3>{stats.avgEcoPoints}</h3>
           <p>Avg. Eco Points</p>
         </div>
+
         <div className="stat-card">
           <FaRecycle className="stat-icon recycle" />
-          <h3>{Math.round(stats.avgEcoPoints * stats.totalProducts)}</h3>
+          <h3>{stats.ecoImpactScore}</h3>
           <p>Eco Impact Score</p>
+        </div>
+
+        <div className="stat-card">
+          <FaBox className="stat-icon violet" />
+          <h3>{stats.totalSold}</h3>
+          <p>Total Sold</p>
         </div>
       </div>
 
-      {/* Product Grid */}
       <section className="products-container">
         {products.length === 0 ? (
           <div className="no-products">
@@ -166,83 +292,93 @@ const MyProducts = () => {
             </button>
           </div>
         ) : (
-          <div className="product-grid">
-            {products.map((p) => (
-              <div className="product-card new-style" key={p.id}>
-                <div className="product-image-wrap">
-                  <img
-                    src={p.image || defaultProduct}
-                    alt={p.name}
-                    className="product-image"
-                  />
+          <div className="product-grid1">
+            {products.map((p) => {
+              const isOutOfStock = (p.stock || 0) <= 0;
+              const isLowStock = !isOutOfStock && (p.stock || 0) < 5;
 
-                  {/* Eco Points */}
-                  <div className="eco-badge">
-                    <FaLeaf /> {p.ecoPoints ?? 0} EP
-                  </div>
-
-                  {/* Category */}
-                  <div className="category-tag">
-                    <FaTag /> {p.category || "General"}
-                  </div>
-                </div>
-
-                <div className="product-info">
-                  <h3 className="prod-name">{p.name}</h3>
-
-                  {/* Product ID */}
-                  <p className="prod-id">
-                    <strong>ID:</strong> {p.productId}
-                  </p>
-
-                  <p className="prod-desc">
-                    {p.description?.slice(0, 60) || "No description"}...
-                  </p>
-
-                  <div className="price-stock-box">
-                    <div>
-                      <span className="label">Price</span>
-                      <h4>₹{p.price}</h4>
+              return (
+                <div className="product-card new-style" key={p.id}>
+                  <div className="product-image-wrap">
+                    <div className="stock-badges">
+                      {isOutOfStock && (
+                        <span className="badge badge-out">Out of Stock</span>
+                      )}
+                      {isLowStock && (
+                        <span className="badge badge-low">Low Stock</span>
+                      )}
                     </div>
 
-                    <div>
-                      <span className="label">Stock</span>
-                      <h4>{p.stock}</h4>
+                    <img
+                      src={safeImage(p.image)}
+                      alt={p.name}
+                      className="product-image"
+                    />
+
+                    <div className="eco-badge">
+                      <FaLeaf /> {p.ecoPoints || 0} EP
                     </div>
 
-                    <div>
-                      <span className="label">Sold</span>
-                      <h4>{p.sold ?? 0}</h4>
+                    <div className="category-tag">
+                      <FaTag /> {p.category || "General"}
                     </div>
                   </div>
 
-                  <div className="date-row">
-                    <FaCalendarAlt />
-                    {p.dateAdded
-                      ? new Date(p.dateAdded).toLocaleDateString()
-                      : "—"}
+                  <div className="product-info">
+                    <h3 className="prod-name">{p.name}</h3>
+
+                    <p className="prod-id">
+                      <strong>ID:</strong> {p.id}
+                    </p>
+
+                    <p className="prod-desc">
+                      {p.description?.slice(0, 60) || "No description"}...
+                    </p>
+
+                    <div className="price-stock-box">
+                      <div>
+                        <span className="label">Price</span>
+                        <h4>₹{p.price}</h4>
+                      </div>
+                      <div>
+                        <span className="label">Stock</span>
+                        <h4>{p.stock}</h4>
+                      </div>
+                      <div>
+                        <span className="label">Sold</span>
+                        <h4>{p.sold || 0}</h4>
+                      </div>
+                    </div>
+
+                    <div className="date-row">
+                      <FaCalendarAlt />
+                      {p.dateAdded
+                        ? new Date(p.dateAdded).toLocaleDateString()
+                        : "—"}
+                    </div>
+                  </div>
+
+                  <div className="card-actions new-actions">
+                    <button
+                      className="edit-btn"
+                      onClick={() => openEditModal(p)}
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      className="delete-btn"
+                      onClick={() => handleDelete(p.id)}
+                    >
+                      🗑 Delete
+                    </button>
                   </div>
                 </div>
-
-                <div className="card-actions new-actions">
-                  <button className="edit-btn" onClick={() => openEditModal(p)}>
-                    ✏️ Edit
-                  </button>
-
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(p.id)}
-                  >
-                    🗑 Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
 
-      {/* Edit Modal */}
       {editingProduct && (
         <div className="modal-overlay" onClick={closeModal}>
           <div
@@ -259,7 +395,7 @@ const MyProducts = () => {
             <div className="modal-body">
               <div className="preview-section">
                 <img
-                  src={formData.image || defaultProduct}
+                  src={safeImage(formData.image)}
                   alt="Preview"
                   className="modal-image-preview"
                 />
@@ -271,11 +407,6 @@ const MyProducts = () => {
               </div>
 
               <div className="form-section">
-                <div className="input-group">
-                  <label>Product ID</label>
-                  <input type="text" value={formData.productId} disabled />
-                </div>
-
                 <div className="input-group">
                   <label>Product Name</label>
                   <input
@@ -302,6 +433,18 @@ const MyProducts = () => {
                     type="number"
                     name="stock"
                     value={formData.stock || ""}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                {/* ⭐ UPDATED — FREE TEXT CATEGORY INPUT */}
+                <div className="input-group">
+                  <label>Category</label>
+                  <input
+                    type="text"
+                    name="category"
+                    placeholder="Enter or create a category"
+                    value={formData.category || ""}
                     onChange={handleChange}
                   />
                 </div>

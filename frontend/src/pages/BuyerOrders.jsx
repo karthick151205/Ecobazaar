@@ -1,250 +1,248 @@
+// src/pages/BuyerOrders.jsx
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
 import BuyerNavbar from "../components/BuyerNavbar";
 import Footer from "../components/Footer";
 import "./BuyerOrders.css";
 
-// import product images
-import kurtiImg from "../assets/kurthi.webp";
-import bagImg from "../assets/cotton_bag.jpg";
-import coverImg from "../assets/cover.webp";
-
 function BuyerOrders() {
   const navigate = useNavigate();
 
-  // Load orders from localStorage or demo
-  const [orders, setOrders] = useState(() => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const user = (() => {
     try {
-      const saved = localStorage.getItem("buyerOrders");
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [
-      {
-        id: "ORD-1001",
-        productName: "Organic Cotton Kurti",
-        image: kurtiImg,
-        price: 335,
-        quantity: 1,
-        date: "2025-11-05",
-        status: "Delivered",
-        category: "Women",
-        rating: 4.2,
-        carbonPoints: 1.3,
-      },
-      {
-        id: "ORD-1002",
-        productName: "Recycled Tote Bag",
-        image: bagImg,
-        price: 210,
-        quantity: 2,
-        date: "2025-11-03",
-        status: "Shipped",
-        category: "Accessories",
-        rating: 4.3,
-        carbonPoints: 1.0,
-      },
-      {
-        id: "ORD-1003",
-        productName: "Eco Phone Cover",
-        image: coverImg,
-        price: 163,
-        quantity: 1,
-        date: "2025-11-01",
-        status: "Pending",
-        category: "Accessories",
-        rating: 3.9,
-        carbonPoints: 0.6,
-      },
-    ];
-  });
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
 
-  // Save initial data
+  const token = localStorage.getItem("token");
+
+  const calculateOrderEcoPoints = (order) => {
+    if (!order || !Array.isArray(order.items)) return 0;
+
+    return order.items.reduce(
+      (sum, item) =>
+        sum + (item.carbonPoints || 0) * (item.quantity || 1),
+      0
+    );
+  };
+
+  const calculateTotalEcoPoints = (allOrders) => {
+    return (allOrders || []).reduce(
+      (sum, o) => sum + calculateOrderEcoPoints(o),
+      0
+    );
+  };
+
   useEffect(() => {
-    localStorage.setItem("buyerOrders", JSON.stringify(orders));
-  }, []);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-  const updateOrders = (updated) => {
-    setOrders(updated);
-    localStorage.setItem("buyerOrders", JSON.stringify(updated));
-  };
-
-  // Sync to seller side
-  const syncSellerOrders = (orderId, newStatus) => {
-    const ecoOrders = JSON.parse(localStorage.getItem("ecoOrders")) || [];
-    const updatedEco = ecoOrders.map((o) =>
-      o.id === orderId ? { ...o, status: newStatus } : o
-    );
-    localStorage.setItem("ecoOrders", JSON.stringify(updatedEco));
-
-    localStorage.setItem("refreshBuyerPages", String(Date.now()));
-    localStorage.setItem("refreshSellerPages", String(Date.now()));
-  };
-
-  // Cancel pending
-  const cancelOrder = (id) => {
-    if (!window.confirm("Cancel order?")) return;
-    const updated = orders.map((o) =>
-      o.id === id ? { ...o, status: "Cancelled" } : o
-    );
-    updateOrders(updated);
-    syncSellerOrders(id, "Cancelled");
-    alert("Order cancelled.");
-  };
-
-  // Return delivered
-  const returnOrder = (id) => {
-    if (!window.confirm("Return this order?")) return;
-    const updated = orders.map((o) =>
-      o.id === id ? { ...o, status: "Returned" } : o
-    );
-    updateOrders(updated);
-    syncSellerOrders(id, "Returned");
-    alert("Return processed.");
-  };
-
-  // Reorder (demo)
-  const reorder = (order) => {
-    alert(`Reorder placed for ${order.productName}`);
-  };
-
-  // React to seller updates
-  useEffect(() => {
-    const handleStorage = () => {
-      const updated = JSON.parse(localStorage.getItem("buyerOrders")) || [];
-      setOrders(updated);
+    const fetchOrders = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/api/orders/buyer/${user.id}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
+        );
+        setOrders(res.data || []);
+      } catch (err) {
+        console.error("Error fetching orders", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
 
-  // ===========================
-  // ⭐ NEW – Navigate to tracking
-  // ===========================
-  const goToTrack = (order) => {
-    navigate(`/buyer/track/${order.id}`, { state: { order } });
+    fetchOrders();
+  }, [user, token]);
+
+  const handleCancelOrder = async (order) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
+
+    try {
+      await axios.put(
+        `http://localhost:8080/api/orders/cancel/${order.id}`,
+        {},
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      alert("Order cancelled.");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to cancel order.");
+    }
   };
 
-  // View product details
-  const viewProductDetails = (order) => {
-    const product = {
-      name: order.productName,
-      image: order.image,
-      price: order.price,
-      category: order.category,
-      rating: order.rating,
-      carbonFootprint: order.carbonPoints,
-    };
-    navigate("/product/:id", { state: { product } });
+  const handleReturnOrder = async (order) => {
+    if (!window.confirm("Start a return request?")) return;
+
+    try {
+      await axios.put(
+        `http://localhost:8080/api/orders/return/${order.id}`,
+        {},
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      alert("Return processed.");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to return order.");
+    }
   };
+
+  const totalEcoPoints = calculateTotalEcoPoints(orders);
 
   return (
-    <div className="buyer-container">
+    <div className="buyer-orders-page">
       <BuyerNavbar />
 
-      <div className="orders-section">
-        <h2>🧾 My Orders</h2>
-        <p className="order-subtext">
-          Track your eco-friendly purchases and manage cancellations/returns.
-        </p>
+      <div className="buyer-orders-container">
+        <h2>My Orders</h2>
 
-        {orders.length === 0 ? (
-          <p className="no-orders">No orders placed yet.</p>
+        {user && orders.length > 0 && (
+          <div className="eco-summary-card">
+            <p>
+              🌿 <strong>Your Total Eco Points from Purchases:</strong>{" "}
+              <span className="eco-total">{totalEcoPoints.toFixed(1)} EP</span>
+            </p>
+          </div>
+        )}
+
+        {loading ? (
+          <p>Loading your orders...</p>
+        ) : !user ? (
+          <div className="buyer-orders-empty">
+            <p>Please login to view your orders.</p>
+            <button onClick={() => navigate("/login")}>Go to Login</button>
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="buyer-orders-empty">
+            <p>You have no orders yet.</p>
+            <button onClick={() => navigate("/buyer-dashboard")}>
+              Start Shopping
+            </button>
+          </div>
         ) : (
           <div className="orders-list">
-            {orders.map((order) => (
-              <div key={order.id} className="order-card">
-                <img
-                  src={order.image}
-                  alt={order.productName}
-                  className="order-img clickable"
-                  onClick={() => viewProductDetails(order)}
-                />
+            {orders.map((order) => {
+              const orderEcoPoints = calculateOrderEcoPoints(order);
 
-                <div className="order-details">
-                  <h3>{order.productName}</h3>
+              return (
+                <div className="order-card" key={order.id}>
+                  {/* Header */}
+                  <div className="order-header">
+                    <div>
+                      <h4>Order ID: {order.id}</h4>
+                      <p>
+                        Placed on:{" "}
+                        {order.createdAt
+                          ? new Date(order.createdAt).toLocaleString()
+                          : "—"}
+                      </p>
 
-                  <p>
-                    <strong>Amount:</strong> ₹{order.price * order.quantity}
-                  </p>
-                  <p>
-                    <strong>Date:</strong> {order.date}
-                  </p>
+                      <p className="eco-points-earned">
+                        🌱 Eco Points from this order:{" "}
+                        <strong>{orderEcoPoints.toFixed(1)}</strong>
+                      </p>
+                    </div>
 
-                  <span className={`status-badge ${order.status.toLowerCase()}`}>
-                    {order.status}
-                  </span>
+                    <div
+                      className={`status-pill status-${order.status
+                        ?.toLowerCase()
+                        ?.replace(/_/g, "-")}`}
+                    >
+                      {order.status}
+                    </div>
+                  </div>
 
-                  <div className="order-actions">
+                  {/* Order Items */}
+                  <div className="order-items">
+                    {order.items?.map((item, index) => (
+                      <div className="order-item-row" key={index}>
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.productName}
+                            onError={(e) => (e.target.style.display = "none")}
+                          />
+                        )}
 
-                    {/* ⭐ Pending */}
-                    {order.status === "Pending" && (
-                      <>
-                        <button
-                          className="cancel-order-btn"
-                          onClick={() => cancelOrder(order.id)}
-                        >
-                          Cancel Order
-                        </button>
-                        <button
-                          className="track-btn"
-                          onClick={() => goToTrack(order)}
-                        >
-                          Track Order
-                        </button>
-                      </>
-                    )}
+                        <div className="item-info">
+                          <h5>{item.productName}</h5>
+                          <p>Qty: {item.quantity}</p>
+                          <p>Price: ₹{item.price}</p>
+                          <p className="eco-small">
+                            ♻ Eco: {item.carbonPoints || 0} / item
+                          </p>
 
-                    {/* ⭐ Shipped */}
-                    {order.status === "Shipped" && (
-                      <>
-                        <button
-                          className="track-btn"
-                          onClick={() => goToTrack(order)}
-                        >
-                          Track Package
-                        </button>
-                        <button
-                          className="details-btn"
-                          onClick={() => viewProductDetails(order)}
-                        >
-                          View Details
-                        </button>
-                      </>
-                    )}
+                          {/* ⭐⭐⭐ SHOW SELLER STATUS ⭐⭐⭐ */}
+                          <p className="seller-status-line">
+                            🚚 Seller Status:{" "}
+                            <strong>
+                              {item.sellerStatus
+                                ? item.sellerStatus.replace(/_/g, " ")
+                                : "CONFIRMED"}
+                            </strong>
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-                    {/* ⭐ Delivered */}
-                    {order.status === "Delivered" && (
-                      <>
-                        <button
-                          className="return-order-btn"
-                          onClick={() => returnOrder(order.id)}
-                        >
-                          Return Item
-                        </button>
-                        <button
-                          className="track-btn"
-                          onClick={() => goToTrack(order)}
-                        >
-                          Track Timeline
-                        </button>
-                      </>
-                    )}
+                  {/* Footer */}
+                  <div className="order-footer">
+                    <div className="order-amount">
+                      <p>Total Amount</p>
+                      <h4>₹{order.totalAmount?.toFixed(2)}</h4>
+                    </div>
 
-                    {/* Returned / Cancelled */}
-                    {(order.status === "Returned" ||
-                      order.status === "Cancelled") && (
+                    <div className="order-actions">
                       <button
                         className="track-btn"
-                        onClick={() => goToTrack(order)}
+                        onClick={() => navigate(`/buyer/track/${order.id}`)}
                       >
-                        View Timeline
+                        🚚 Track
                       </button>
-                    )}
 
+                      {order.status === "DELIVERED" && (
+                        <button
+                          className="return-btn"
+                          onClick={() => handleReturnOrder(order)}
+                        >
+                          🔄 Return
+                        </button>
+                      )}
+
+                      {(order.status === "PENDING" ||
+                        order.status === "CONFIRMED") && (
+                        <button
+                          className="cancel-btn-order"
+                          onClick={() => handleCancelOrder(order)}
+                        >
+                          ❌ Cancel
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

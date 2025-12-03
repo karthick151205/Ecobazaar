@@ -1,0 +1,261 @@
+/* ============================
+   PAGE TITLE
+============================ */
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0b8457;
+  margin-bottom: 20px;
+}
+
+
+/* ============================
+   GRID OF HELP CARDS
+============================ */
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 24px;
+}
+
+
+/* ============================
+   HELP CARD — New Design
+============================ */
+.help-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.12);
+  border-left: 6px solid #0b8457;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.help-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.help-card h3 {
+  color: #0a6b49;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+
+/* ============================
+   USER MESSAGE BOX
+============================ */
+.help-message {
+  background: #f2fff7;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 14px 0;
+  color: #333;
+  border-left: 4px solid #0b8457;
+  line-height: 1.5;
+}
+
+
+/* ============================
+   ADMIN REPLY BOX
+============================ */
+.admin-reply-box {
+  background: #e9f6ff;
+  border-radius: 10px;
+  padding: 12px;
+  border-left: 4px solid #3a8ee6;
+  margin-bottom: 12px;
+}
+
+.admin-reply-box strong {
+  color: #2167c8;
+}
+
+.admin-reply-box p {
+  margin-top: 6px;
+  color: #222;
+  line-height: 1.5;
+}
+
+
+/* ============================
+   BADGE (Replied / Pending)
+============================ */
+.reply-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reply-badge.replied {
+  background: #d1ffe6;
+  color: #0a8551;
+  border: 1px solid #0a8551;
+}
+
+.reply-badge.pending {
+  background: #ffe6e6;
+  color: #c62828;
+  border: 1px solid #c62828;
+}
+
+
+/* ============================
+   ACTION BUTTONS
+============================ */
+.help-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.reply-btn,
+.resolve-btn,
+.delete-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 14px;
+}
+
+/* Reply */
+.reply-btn {
+  background: #12c48b;
+  color: white;
+}
+.reply-btn:hover {
+  background: #0ea76f;
+  transform: scale(1.05);
+}
+
+/* Resolved */
+.resolve-btn {
+  background: #4ba2ff;
+  color: white;
+}
+.resolve-btn:hover {
+  background: #2c86e6;
+  transform: scale(1.05);
+}
+
+/* Delete */
+.delete-btn {
+  background: #ff5c5c;
+  color: white;
+}
+.delete-btn:hover {
+  background: #e64848;
+  transform: scale(1.05);
+}
+
+
+/* ============================
+   REPLY POPUP OVERLAY
+============================ */
+.reply-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+  z-index: 999;
+}
+
+
+/* ============================
+   POPUP BOX
+============================ */
+.reply-popup {
+  width: 420px;
+  background: white;
+  padding: 24px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  animation: slideUp 0.25s ease;
+}
+
+.reply-popup h3 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #0b8457;
+}
+
+/* Textarea */
+.reply-popup textarea {
+  width: 95%;
+  height: 150px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 12px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.reply-popup textarea:focus {
+  border-color: #0b8457;
+  box-shadow: 0 0 5px rgba(11, 132, 87, 0.4);
+}
+
+
+/* Popup Buttons */
+.reply-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.send-btn,
+.close-btn1 {
+  width: 48%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.send-btn {
+  background: #0b8457;
+}
+.send-btn:hover {
+  background: #096b45;
+  transform: scale(1.05);
+}
+
+.close-btn1 {
+  background: #ff4747;
+}
+.close-btn1:hover {
+  background: #d63c3c;
+  transform: scale(1.05);
+}
+
+
+/* ============================
+   Animations
+============================ */
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

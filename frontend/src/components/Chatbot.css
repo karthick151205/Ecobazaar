@@ -1,0 +1,258 @@
+/* Floating Chat Button */
+.chat-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: linear-gradient(135deg, #27ae60, #1b7f4d);
+  color: white;
+  font-size: 28px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  transition: 0.3s ease;
+  z-index: 2000;
+}
+
+.chat-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* Chat Container (Popup) */
+.chatbot-container {
+  position: fixed;
+  bottom: 110px;
+  right: 30px;
+  width: 360px;
+  height: 520px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(30px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s ease-in-out;
+  z-index: 2000;
+}
+
+/* Smooth Open Animation */
+.chatbot-container.open {
+  transform: translateY(0px);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Chat Header */
+.chat-header {
+  background: linear-gradient(135deg, #2ecc71, #1b7f4d);
+  padding: 15px;
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn2 {
+  background: transparent;
+  font-size: 22px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.close-btn2:hover {
+  transform: scale(1.2);
+}
+
+/* Chat Window */
+.chat-window {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: #f3faf3;
+  scrollbar-width: thin;
+}
+
+/* Message Base */
+.message {
+  max-width: 75%;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 15px;
+  line-height: 1.4;
+  font-size: 15px;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+/* User Message */
+.message.user {
+  background: #d4fcd2;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+/* Bot Message */
+.message.bot {
+  background: #ffffff;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Recommendation Box */
+.reco-box {
+  margin-top: 10px;
+}
+
+/* Recommendation Cards */
+.reco-card {
+  background: #ecffec;
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  border-left: 5px solid #2ecc71;
+  box-shadow: 0 2px 5px rgba(0, 100, 0, 0.1);
+  transition: 0.25s;
+}
+
+.reco-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 100, 0, 0.2);
+}
+
+.reco-card h4 {
+  margin: 0;
+  color: #1b7f4d;
+  font-size: 16px;
+}
+
+.pid {
+  font-size: 12px;
+  color: #555;
+}
+
+/* Input Box */
+.input-box {
+  display: flex;
+  padding: 12px;
+  border-top: 1px solid #ddd;
+  background: white;
+}
+
+.input-box input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #bbb;
+  border-radius: 14px;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.input-box input:focus {
+  outline: none;
+  border-color: #27ae60;
+}
+
+.input-box button {
+  margin-left: 10px;
+  padding: 12px 18px;
+  background: #27ae60;
+  border: none;
+  color: white;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.25s;
+  font-weight: 600;
+}
+
+.input-box button:hover {
+  background: #1b7f4d;
+  transform: scale(1.03);
+}
+
+/* Loading */
+.loading {
+  font-style: italic;
+  color: #808080;
+  padding: 10px;
+  text-align: center;
+}
+/* PRODUCT CARD LAYOUT */
+.reco-card {
+  display: flex;
+  gap: 12px;
+  background: #f0fff3;
+  padding: 12px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  border-left: 6px solid #2ecc71;
+  box-shadow: 0 3px 10px rgba(0, 100, 0, 0.12);
+  transition: 0.2s ease;
+}
+
+.reco-card:hover {
+  transform: scale(1.02);
+}
+
+/* IMAGE */
+.reco-img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* CONTENT */
+.reco-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+
+/* TITLE */
+.reco-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0c6b38;
+}
+
+/* CATEGORY */
+.reco-category {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #444;
+}
+
+/* DETAILS */
+.reco-details {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: #333;
+  gap: 2px;
+}

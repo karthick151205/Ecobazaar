@@ -1,11 +1,12 @@
 // src/pages/BuyerTrackPage.jsx
-import React from "react";
-import { useLocation, useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import "./BuyerTrackPage.css";
+
 import BuyerNavbar from "../components/BuyerNavbar";
 import Footer from "../components/Footer";
 
-// 🚀 Icons for timeline
+// Icons
 import {
   FaClock,
   FaTools,
@@ -16,22 +17,51 @@ import {
   FaUndo,
 } from "react-icons/fa";
 
-// Step definitions with icons
+// Timeline steps
 const steps = [
-  { label: "Pending", icon: <FaClock /> },
-  { label: "Processing", icon: <FaTools /> },
-  { label: "Shipped", icon: <FaTruck /> },
-  { label: "Out for Delivery", icon: <FaMotorcycle /> },
-  { label: "Delivered", icon: <FaCheckCircle /> },
+  { label: "CONFIRMED", icon: <FaClock /> },
+  { label: "PROCESSING", icon: <FaTools /> },
+  { label: "SHIPPED", icon: <FaTruck /> },
+  { label: "OUT_FOR_DELIVERY", icon: <FaMotorcycle /> },
+  { label: "DELIVERED", icon: <FaCheckCircle /> },
 ];
 
 const BuyerTrackPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const order = location.state?.order;
 
-  // ❌ If opened directly, no data
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const token = localStorage.getItem("token");
+
+  // Load order from backend
+  useEffect(() => {
+    const loadOrder = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/api/orders/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!res.ok) {
+          setLoading(false);
+          return;
+        }
+
+        setOrder(await res.json());
+      } catch (err) {
+        console.error("Error loading order:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrder();
+  }, [id, token]);
+
+  // UI Conditions
+  if (loading) return <h2 className="loading">Loading tracking details...</h2>;
+
   if (!order) {
     return (
       <div className="track-error">
@@ -43,13 +73,17 @@ const BuyerTrackPage = () => {
     );
   }
 
-  const status = order.status;
-  const isCancelled = status === "Cancelled";
-  const isReturned = status === "Returned";
+  // FIRST ITEM IN ORDER
+  const firstItem = order.items?.[0] || {};
 
-  const currentIndex = steps.findIndex(
-    (s) => s.label.toLowerCase() === status.toLowerCase()
-  );
+  // 🔥 MOST IMPORTANT — SHOW SELLER STATUS
+  const safeStatus =
+    firstItem.sellerStatus || order.status || "CONFIRMED";
+
+  const isCancelled = safeStatus === "CANCELLED";
+  const isReturned = safeStatus === "RETURNED";
+
+  const currentIndex = steps.findIndex((s) => s.label === safeStatus);
 
   return (
     <div className="buyer-track-page">
@@ -57,31 +91,51 @@ const BuyerTrackPage = () => {
 
       <div className="track-wrapper">
         <h1 className="track-title">📍 Tracking Your Order</h1>
+
         <p className="order-id-line">
           Order ID: <strong>{order.id}</strong>
         </p>
 
-        {/* ORDER CARD */}
+        {/* MAIN ORDER CARD */}
         <div className="track-card">
           <img
-            src={order.image}
-            alt={order.productName}
+            src={firstItem.imageUrl}
+            alt={firstItem.productName}
             className="track-image"
+            onError={(e) => (e.target.style.display = "none")}
           />
 
           <div className="track-info">
-            <h2>{order.productName}</h2>
+            <h2>{firstItem.productName}</h2>
 
             {/* STATUS BADGE */}
-            <span className={`track-status-badge ${status.toLowerCase().replace(/\s/g, "-")}`}>
-              {status}
+            <span
+              className={`track-status-badge ${safeStatus
+                .toLowerCase()
+                .replace(/_/g, "-")}`}
+            >
+              {safeStatus.replace(/_/g, " ")}
             </span>
 
-            <p><strong>Price:</strong> ₹{order.price} × {order.quantity}</p>
-            <p><strong>Total Paid:</strong> ₹{order.price * order.quantity}</p>
-            <p><strong>Ordered On:</strong> {order.date}</p>
-            <p><strong>Category:</strong> {order.category || "General"}</p>
-            <p><strong>Carbon Footprint:</strong> {order.carbonPoints} kg CO₂</p>
+            <p>
+              <strong>Price:</strong> ₹{firstItem.price} × {firstItem.quantity}
+            </p>
+
+            <p>
+              <strong>Total Paid:</strong> ₹{order.totalAmount}
+            </p>
+
+            <p>
+              <strong>Ordered On:</strong>{" "}
+              {order.createdAt
+                ? new Date(order.createdAt).toLocaleString()
+                : "—"}
+            </p>
+
+            <p>
+              <strong>Carbon Points:</strong>{" "}
+              {firstItem.carbonPoints || 0} EP
+            </p>
           </div>
         </div>
 
@@ -89,30 +143,29 @@ const BuyerTrackPage = () => {
         <h2 className="progress-title">Order Journey</h2>
 
         <div className="timeline">
-          {/* If Cancelled or Returned */}
           {isCancelled || isReturned ? (
+            // CANCELLED / RETURNED VIEW
             <div className="cancel-return-box">
               {isCancelled ? (
                 <>
                   <FaTimesCircle className="cancel-icon" />
-                  <h3 className="cancel-text">Order Cancelled</h3>
-                  <p>This order was cancelled and will not be delivered.</p>
+                  <h3>Order Cancelled</h3>
                 </>
               ) : (
                 <>
                   <FaUndo className="return-icon" />
-                  <h3 className="return-text">Order Returned</h3>
-                  <p>The item has been returned successfully.</p>
+                  <h3>Order Returned</h3>
                 </>
               )}
             </div>
           ) : (
+            // NORMAL PROGRESS
             <div className="timeline-inner">
-              {steps.map((step, index) => (
-                <div className="timeline-step" key={index}>
+              {steps.map((step, idx) => (
+                <div className="timeline-step" key={idx}>
                   <div
                     className={`timeline-icon ${
-                      index <= currentIndex ? "active" : ""
+                      idx <= currentIndex ? "active" : ""
                     }`}
                   >
                     {step.icon}
@@ -120,16 +173,16 @@ const BuyerTrackPage = () => {
 
                   <span
                     className={`timeline-label ${
-                      index <= currentIndex ? "active" : ""
+                      idx <= currentIndex ? "active" : ""
                     }`}
                   >
-                    {step.label}
+                    {step.label.replace(/_/g, " ")}
                   </span>
 
-                  {index < steps.length - 1 && (
+                  {idx < steps.length - 1 && (
                     <div
                       className={`timeline-line ${
-                        index < currentIndex ? "active" : ""
+                        idx < currentIndex ? "active" : ""
                       }`}
                     ></div>
                   )}
